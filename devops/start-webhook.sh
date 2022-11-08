@@ -2,4 +2,4 @@
 
 
 echo "Starting webhook server..."
-webhook -hooks ./hooks.json -hotreload -verbose -http-methods post -port 8088
+webhook -hooks /automation/hooks.json -hotreload -verbose -http-methods post -port 8088
