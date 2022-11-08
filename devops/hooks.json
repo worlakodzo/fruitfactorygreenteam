@@ -1,7 +1,7 @@
 [
     {
       "id": "billing-weight-app",
-      "execute-command": "/home/ubuntu/ganshmuelgreenteam/devops/redeploy-weight-billing-app.sh",
+      "execute-command": "/home/ubuntu/ganshmuelgreenteam/devops/ci-cd-weight-billing-app.sh",
       "command-working-directory": "/weight-billing-app/ci",
       "response-message": "Deployed...",
       "trigger-rule": {
