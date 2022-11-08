@@ -4,13 +4,24 @@ app = Flask(__name__)
 @app.route("/weight", methods=["POST", "GET"])
 def get_weight():
     data = []
+    bruto = None
+    neto = None
     if request.method=="POST":
-        direction = request.form["direction"]
-        truck = request.form["license"]
-        containers = request.form.getlist("containers")
-        unit = request.form["unit"]
-        force = request.form["force"]
-        produce=request.form["produce"]
+        json_data = request.get_json()
+        direction = json_data["direction"]
+        truck = json_data["license"]
+        containers = json_data["containers"]
+        weight = json_data["weight"]
+        unit = json_data["unit"]
+        force = json_data["force"]
+        produce=json_data["produce"]
+
+        if direction == "IN":
+            bruto = weight
+
+        elif direction == "OUT":
+            neto = weight
+
 
         data.extend((truck, direction, containers, unit, force, produce))
         
@@ -27,3 +38,5 @@ def get_weight():
     return 404
 if __name__=="__main__":
     app.run()
+
+  
