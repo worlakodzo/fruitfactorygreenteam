@@ -1,24 +1,8 @@
-### DevOps Gan Shmuel
-
-
-## Webhook Installation 
-
-```
-sudo apt update
-sudo apt install webhook
-
-```
-
-
-## Webhook Configuration
-
-```
-
 [
     {
       "id": "billing-weight-app",
-      "execute-command": "/media/worlako/MAC OSX/REALLY-GREAT-TECH/WORK-SPACE/ganshmuelgreenteam/devops/redeploy-nodejs-app.sh",
-      "command-working-directory": "/media/worlako/MAC OSX/REALLY-GREAT-TECH/WORK-SPACE/ganshmuelgreenteam/devops",
+      "execute-command": "/home/ubuntu/ganshmuelgreenteam/devops/redeploy-weight-billing-app.sh",
+      "command-working-directory": "/weight-billing-app/ci",
       "response-message": "Deployed...",
       "trigger-rule": {
         "and": [
@@ -46,12 +30,3 @@ sudo apt install webhook
       }
     }
   ]
-
-```
-
-### Start webhook
-
-```
-webhook -hooks ./hooks.json -hotreload -verbose -http-methods post
-
-```
