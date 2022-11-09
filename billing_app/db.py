@@ -1,9 +1,11 @@
 import mysql.connector
-
+import socket
+dbhost=socket.gethostbyname('billdb')
 connection = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="password",
+
+    host=dbhost,
+    user="billing",
+    password="billing1password",
     database="billdb",
     port=8879
 )
