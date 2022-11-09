@@ -18,8 +18,7 @@ def home():
     return ("hello green weight")
 
 @app.route('/session/<id>')
-def get_session(id):
-    id=request.view_args['id']
+def get_session(id):     
     id=int(id)
     temp_dict={}     
     cur=mysql.connection.cursor()
@@ -40,41 +39,48 @@ def get_session(id):
     #     temp_dict[item]
     return [temp_dict]
         
-
-
 @app.route('/weight')
 def get_weight():
+    begin='0000-00-00 00:00:00.000000'
+    end=datetime.datetime.now() 
+    fil=''
     cur=mysql.connection.cursor()
-    if request.args.get('from'):
-        begin=request.args.get('from')        
-    else:
-        begin='2022-11-08 00:00:00.000000' 
-    if request.args.get('to'):
-        end=request.args.get('to')
-    else:
-        end=datetime.datetime.now() 
+   
     if request.args.get('filter'):
-        fil=request.args.get('filter')
-    else:
-        fil='' 
-    # if fil=='':    
-    #     results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions ORDER BY direction WHERE datetime BETWEEN %s AND %s",(begin,end))
-    # else:
-    #     results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions ORDER BY direction WHERE direction=%s AND datetime BETWEEN DATE(%s) AND DATE(%s)",(begin,end,fil))
-    results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions ORDER BY direction")
-    if results>0:         
-        transanction_Details=cur.fetchall()
-        final_output=[]
-        temp_dict={'id':'','direction':'','bruto':'','neto':'','produce':'','containers':[]}
-        for row in transanction_Details:
-            for i,item in enumerate(temp_dict):
-                temp_dict[item]=row[i]
-                if i==len(row)-1:
-                    temp_dict[item]=list(row[i].split(','))
-            final_output.append(temp_dict)
-        return final_output
- 
+        if request.args.get('from'):
+            begin=request.args.get('from')
+        if request.args.get('to'): 
+            end=request.args.get('to') 
+        fil=request.args.get('filter')             
+        results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE direction LIKE %s AND datetime BETWEEN %s AND %s",(fil,begin,end))
+        if results>0:         
+            transanction_Details=cur.fetchall()
+            final_output=[]
+            for row in transanction_Details:
+                dict=row_to_dict(row)
+                final_output.append(dict)              
+            return final_output
+
+    else:         
+        results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE datetime BETWEEN %s AND %s  ORDER BY direction",(begin,end))    
+        if results>0:                   
+            transanction_Details=cur.fetchall()
+            final_output=[]
+            for row in transanction_Details:
+                dict=row_to_dict(row)
+                final_output.append(dict)
+            return final_output
+
+            
     return ("weight is empty")
+def row_to_dict(row):
+    temp_dict_list=['id','direction','bruto','neto','produce','containers']
+    temp_dict={}
+    for i,item in enumerate(row):
+        temp_dict[temp_dict_list[i]]=item
+        if i==len(row)-1:
+            temp_dict[temp_dict_list[i]]=list(item.split(','))
+    return temp_dict
   
 if __name__=="__main__":
     app.run()
