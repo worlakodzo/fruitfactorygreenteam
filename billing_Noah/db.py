@@ -7,9 +7,9 @@ connection = mysql.connector.connect(
     password="mypd",
     database="billdb"
 =======
-    password="root",
-    database="billdb",
-    port=3307
+    #password="root",
+    #database="billdb",
+    #port=3307
 >>>>>>> d60316dd232916757de72238a2fa6c42ed6eae32:billing_app/db.py
 )
 
