@@ -28,6 +28,47 @@ def billing_index():
     except Exception as err:
         abort(500)
 
+@app.route('/provider', methods=['GET', 'POST', 'PUT'])
+def provider():
+    if request.method == 'POST':
+        body = request.get_json()
+        id = body['id']
+        name = body['name']
+        if id != '' and name != '':
+            with connection.cursor() as provider:
+                provider = connection.cursor(dictionary=True)
+                do = "INSERT INTO Provider (`name`) VALUES (%s)"
+                provider.execute(do)
+                connection.commit()
+                return jsonify(id), 201
+        else:
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204
+            
+    else:
+        with connection.cursor() as provider:
+            do = "SELECT * FROM Provider"
+            provider.execute(do)
+            result = provider.fetchall()
+            return jsonify(result)
+
+
+
+@app.route('/provider/<id>', methods=['GET', 'POST', 'PUT'])
+def update_provider_name(id):
+    if request.method == 'PUT':
+        body = request.args.get()
+        name = body['name']
+        if name != '':
+            with connection.cursor() as provider:
+                provider = connection.cursor(dictionary=True)
+                do = "INSERT INTO Provider (`name`) VALUES (%s)"
+                provider.execute(do)
+                connection.commit()
+                return jsonify(name), 201
+        else:
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204
+            
+
 
 @app.route('/weight', methods = ["POST"])
 def add_weight():
@@ -105,15 +146,6 @@ def getbill(id):
 
     # expected return
     return jsonify({"id": 12,"name": "<str>","from": "<str>","to": "<str>","truckCount": "<int>","sessionCount": "<int>","products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],"total": "<int>" })
-
-
-@app.errorhandler(500)
-def internal_server_error(error):
-    return jsonify({
-        "success": False,
-        "error": 500,
-        "msg": "Internal Server Error"
-    })
 
 
 

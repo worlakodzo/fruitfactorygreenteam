@@ -1,11 +1,11 @@
 import mysql.connector
 
 connection = mysql.connector.connect(
-    host="127.0.0.1",
+    host="localhost",
     user="root",
-    password="root",
+    password="password",
     database="billdb",
-    port=3306
+    port=8879
 )
 
 mycursor = connection.cursor()
