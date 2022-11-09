@@ -19,7 +19,7 @@ services:
   billapi:
       build: .
       ports:
-        - "8085:5000"
+        - "8082:5000"
 
       environment:
         MYSQL_DATABASE: 'billdb'
