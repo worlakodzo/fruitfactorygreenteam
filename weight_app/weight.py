@@ -1,12 +1,10 @@
-from flask import Flask,render_template,request
+from flask import Flask,request
 from flask_mysqldb import MySQL
 import datetime
  
  
 app=Flask(__name__)
 
-with open('db.yaml','r') as file:
-    db=yaml.safe_load(file)
  
 app.config['MYSQL_HOST']='localhost'
 app.config['MYSQL_USER']='root'
@@ -18,6 +16,31 @@ mysql=MySQL(app)
 @app.route('/')
 def home():
     return ("hello green weight")
+
+@app.route('/session/<id>')
+def get_session(id):
+    id=request.view_args['id']
+    id=int(id)
+    temp_dict={}     
+    cur=mysql.connection.cursor()
+    results=cur.execute("SELECT direction,id,truck,bruto,truckTara,neto FROM transactions WHERE id LIKE %s",(id,))
+    if results>0:
+        session_details=cur.fetchall()
+        if session_details[0][0]=='in':
+            temp_dict['id']=session_details[0][1]
+            temp_dict['truck']=session_details[0][2]
+            temp_dict['bruto']=session_details[0][3]
+        if session_details[0][0]=='out':
+            temp_dict['id']=session_details[0][1]
+            temp_dict['truck']=session_details[0][2]
+            temp_dict['bruto']=session_details[0][3]
+            temp_dict['truckTara']=session_details[0][4]
+            temp_dict['neto']=session_details[0][5]   
+    # for item in results:
+    #     temp_dict[item]
+    return [temp_dict]
+        
+
 
 @app.route('/weight')
 def get_weight():
