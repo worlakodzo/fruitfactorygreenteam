@@ -2,8 +2,8 @@ from flask import Flask, jsonify, request
 from db import connection, mycursor
 from controllers.rates import rates
 import os.path
-import pandas as pd
-import xlrd
+# import pandas as pd
+# import xlrd
 from openpyxl import Workbook, load_workbook
 import datetime
 
@@ -58,6 +58,21 @@ def rates():
             
             return jsonify({"msg": "Rates downloaded successfully!"})
 
+
+@app.route('/bill/<id>')
+def getbill():
+    id = request.args.get('id')
+    t1 = request.args.get('t1')
+    t2 = request.args.get('t2')
+
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    return jsonify({
+        "success": False,
+        "error": 500,
+        "msg": "Internal Server Error"
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
