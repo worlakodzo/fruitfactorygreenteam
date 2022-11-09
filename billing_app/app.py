@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request, abort
-from db import connection, mycursor
+#from app import db
+from db import connection
+from app import  DatabaseSession, health, HealthCheck
 import os.path
 # import pandas as pd
 # import xlrd
@@ -8,18 +10,35 @@ import datetime
 
 
 app = Flask(__name__)
-@app.route("/billing-api/health")
-def index_test_bd():
+#@app.route('/health', methods = ["GET"])
+#def index_test_bd():
+    #if mycursor == connection.cursor():
+
     # with connection.cursor() as mycursor:
     #             mycursor = connection.cursor(dictionary=True)
     #             stmt = "select 1"
     #             mycursor.execute(stmt)
     #             connection.commit()
-    return jsonify({"message":"billing server health check successful"}), 200
+       #return jsonify({"OK"}), 200
 
+health = HealthCheck(app, "/health")
 
+def health_db_status():
+    is_database_working = True
+    output = 'OK'
+    #return jsonify({"OK"}), 200
 
+    try:
+        session = DatabaseSession.get_database_session()
+        #db.session.execute('select 1')
+        session.execute('select 1')
+    except Exception as e:
+        output = str(e)
+        is_database_working = False
+    return is_database_working, output
+    #return jsonify({"Internal Server Error"}), 500
 
+health.add_check(health_db_status)
 
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
