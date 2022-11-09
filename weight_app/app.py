@@ -1,4 +1,4 @@
-from flask import Flask,request
+from flask import Flask,request,jsonify
 from flask_mysqldb import MySQL
 import datetime
  
@@ -81,6 +81,28 @@ def row_to_dict(row):
         if i==len(row)-1:
             temp_dict[temp_dict_list[i]]=list(item.split(','))
     return temp_dict
+
+
+@app.route("/weight-api/health", methods=["GET"])
+def get_health():
+    # cur = mysql.connection.cursor()
+    # result = cur.execute("Select * from users")
+    # if result > 0:
+    #   return "OK", 200
+    # else:
+    #   return "Data not found", 404
+    # services = []
+    # # result = ""
+    # for service in services:
+    #   req = request.get(f"http://localhost:5000/{service}")
+    #   status_code = req.status_code
+    #   if status_code < 200 or status_code > 299:
+    #       result += f"\n service {service} : ... failed - {status_code} \n"
+    #   else:
+    #       result += f"\n Service {service} : {status_code}... ok \n"
+    return jsonify({
+        "message": "Weight server health check successful"
+    })
   
 if __name__=="__main__":
     app.run()
