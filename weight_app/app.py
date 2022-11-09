@@ -6,7 +6,9 @@ def home():
 @app.route('/weight')
 def get_weight():
     return ("weight is green")
-@app.route("/health", methods=["GET"])
+
+
+@app.route("/weight-api/health", methods=["GET"])
 def get_health():
     # cur = mysql.connection.cursor()
     # result = cur.execute("Select * from users")
@@ -24,7 +26,7 @@ def get_health():
     #   else:
     #       result += f"\n Service {service} : {status_code}... ok \n"
     return jsonify({
-        "message": "Health check successful"
+        "message": "Weight server health check successful"
     })
 if __name__=="__main__":
     app.run()
