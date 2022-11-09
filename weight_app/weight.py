@@ -1,9 +1,12 @@
 #IMPORTS
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from datetime import datetime
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
-import csv
+import csv, json
+from read_file import *
+import sys
+
 
 
 app = Flask(__name__)
@@ -66,16 +69,32 @@ def get_weight():
 
 @app.route("/batch-weight/<file_name>", methods=["POST"])
 def get_batch_weight(file_name):
-   
-    if file_name.lower().endswith('.csv'):
-         with open(f"./Samples/{file_name}", 'r') as file:
-            reader = csv.DictReader(file)
-            for i in reader:
-                print(i)
-    elif file_name.lower().endswith('.json'):
-        return None
 
-    return "M"
+    # Getting extension of file
+    extension=(file_name.split('.'))[1]
+    
+    data = None
+    
+    try: # Trying to read the file
+        with open(f"./Samples/{file_name}", 'r') as file:
+            if extension == "csv":
+                    data = [{k:v for k,v in reader.items()} for reader in csv.DictReader(file, skipinitialspace=True)]
+                    print(data)
+            elif extension == "json":
+                data = json.load(file)
+
+        # Getting sum of the sum of weight from the containers read from the file.
+        sum,unit=read_file(data, extension)
+
+        return jsonify({"neto":sum, "unit":unit})
+    # Throwing an exception because file read failed...
+    except IOError as e:
+        print(e)
+        resp = jsonify("File not found, better check the extention or filename")
+        resp.status_code=404
+        return resp
+
+
 
 if __name__=="__main__":
     app.run()
