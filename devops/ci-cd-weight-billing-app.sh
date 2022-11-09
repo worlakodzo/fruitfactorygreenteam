@@ -1,17 +1,61 @@
 #!/bin/bash
 #create cicd gmail account
-FROM_ADDRESS="enter cicd send email address here"
+FROM_ADDRESS="greenteamcicd@gmail.com"
 #create group cicd email group for members
-TO_ADDRESS="enter cicd receive email address here"
+TO_ADDRESS="greenteamcicd@gmail.com"
 
-SUBJECT="enter email subject here"
+SUBJECT="CICD DEPLOYMENT"
 
-SUCCESS_BODY="Enter success message body here"
+TEST_SUCCESS_BODY="ATTENTION!!! Test Run passed."
+DEPLOYMENT_SUCCESS="Deployment is successful"
 
-FAILED_BODY="Enter failure message body here"
+FAILED_BODY="ATTENTION!!! Test Run Failed."
 
 # Login as cicd account at https://myaccount.google.com/ and create an app token under "Security" >> "Signing in to google" >> "App Passwords"
-APP_TOKEN="enter security token here"
+APP_TOKEN="ucairqdcrdnvsfbl"
+
+
+function backup(){
+    backup_date=date +%Y%m%d%H%M%S
+    cd ../billing_app 
+    docker build -t billing-app:00-SNAPSHOT-$backup_date
+    cd ../weight_app
+    docker build -t weight-app:00-SNAPSHOT-$backup_date
+}
+
+function deploy_to_test(){
+    echo "Building Test Application From Docker Compose File"
+    cd ../billing_app
+    docker-compose build
+    docker-compose up -d
+    cd ../weight_app
+    docker-compose 
+    docker-compose up -d
+}
+
+
+function deploy_to_production(){
+    echo "Building Production Application From Docker Compose File"
+    cd ../billing_app
+    docker-compose build
+    docker-compose up -d
+    cd ../weight_app
+    docker-compose 
+    docker-compose up -d
+}
+
+function run_test_script(){
+    if [[ $? == 0 ]]; then
+        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
+        deploy_to_production
+        
+    else 
+        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $FAILED_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
+
+}
+
+# Create a backup of the images.
+backup
 
 # 1. Fetch the latest code from remote
 # git pull -f origin main
@@ -19,38 +63,6 @@ echo "Starting pulling green team weight and billing app repo"
 git pull -f origin main
 echo "Done pulling green team weight and billing app repo"
 
-
-
-function deploy_to_test(){
-
-}
-
-function run_test_script(){
-    if [[ $? == 0 ]]; then
-        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
-    else 
-        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $FAILED_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
-
-}
-
-function deploy_to_production(){
-    echo "Building Production Application From Docker Compose File"
-    cd ../billing_app
-    docker-compose up -d
-    cd ../billing_app
-    docker-compose up -d
-
-}
-
-
-# function send_mail(){
-#     sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
-
-# }
-
-
-
-
-
-
+deploy_to_test
+run_test_script
 
