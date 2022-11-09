@@ -14,7 +14,9 @@ function deploy_to_test(){
 
 
 function run_test_script(){
-
+    echo "#######Testing Started...########"
+    python3 -m pytest -v
+    echo "#######Testing Completed...########"
 }
 
 
