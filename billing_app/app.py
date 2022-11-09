@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request, abort
 from db import connection, mycursor
-from controllers.rates import rates
 import os.path
 # import pandas as pd
 # import xlrd
@@ -9,6 +8,15 @@ import datetime
 
 
 app = Flask(__name__)
+@app.route("/billing-api/health")
+def index_test_bd():
+    # with connection.cursor() as mycursor:
+    #             mycursor = connection.cursor(dictionary=True)
+    #             stmt = "select 1"
+    #             mycursor.execute(stmt)
+    #             connection.commit()
+    return jsonify({"message":"billing server health check successful"}), 200
+
 
 
 
