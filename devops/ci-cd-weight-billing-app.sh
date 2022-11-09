@@ -45,6 +45,10 @@ function deploy_to_production(){
 }
 
 function run_test_script(){
+    echo "#######Testing Started...########"
+    python3 -m pytest -v
+    echo "#######Testing Completed...########"
+    
     if [[ $? == 0 ]]; then
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
         deploy_to_production
