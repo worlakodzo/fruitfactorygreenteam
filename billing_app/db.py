@@ -1,12 +1,12 @@
 import mysql.connector
-import os
-
+import socket
+dbhost=socket.gethostbyname('billdb')
 connection = mysql.connector.connect(
-    host="127.0.0.1",
+    host=dbhost,
     user="billing",
     password="billing1password",
     database="billdb",
-    port=3307
+    port=3306
 )
 
 mycursor = connection.cursor()
