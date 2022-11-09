@@ -89,27 +89,6 @@ def add_weight():
     return jsonify(data), 201
 
 
-@app.route('/provider', methods=['GET', 'POST', 'PUT'])
-def rates():
-    if request.method == 'POST':
-        body = request.get_json()
-        id = body['id']
-        provider_name = body['provider_name']
-        if id != '' and provider_name != '':
-            with connection.cursor() as provider:
-                return jsonify(id), 201
-        else:
-            return jsonify({"msg": " Unsuccessfull!!!"}), 204
-    else:
-        with connection.cursor() as provider:
-            provider = connection.cursor(dictionary=True)
-            do = "SELECT * FROM Provider"
-            provider.execute(do)
-            result = provider.fetchall()
-            return jsonify(result)
-
-
-
 @app.route('/rates', methods=['GET', 'POST'])
 def rates():
     if request.method == 'POST':
