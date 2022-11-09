@@ -16,11 +16,11 @@ APP_TOKEN="ucairqdcrdnvsfbl"
 
 
 function backup(){
-    backup_date=date +%Y%m%d%H%M%S
+    backup_date="$(date +%Y%m%d%H%M%S)"
     cd ../billing_app 
-    docker build -t billing-app:00-SNAPSHOT-$backup_date
+    docker build -t billing-app:00-SNAPSHOT-$backup_date .
     cd ../weight_app
-    docker build -t weight-app:00-SNAPSHOT-$backup_date
+    docker build -t weight-app:00-SNAPSHOT-$backup_date .
 }
 
 function deploy_to_test(){
@@ -51,7 +51,7 @@ function run_test_script(){
         
     else 
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $FAILED_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
-
+    fi
 }
 
 # Create a backup of the images.
