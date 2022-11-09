@@ -50,7 +50,7 @@ function run_test_script(){
     echo "#######Testing Completed...########"
     
     if [[ $? == 0 ]]; then
-        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
+        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $DEPLOYMENT_SUCCESS -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
         deploy_to_production
         
     else 
