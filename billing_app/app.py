@@ -60,10 +60,12 @@ def rates():
 
 
 @app.route('/bill/<id>')
-def getbill():
-    id = request.args.get('id')
+def getbill(id):
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
+
+    # expected return
+    return jsonify({"id": 12,"name": "<str>","from": "<str>","to": "<str>","truckCount": "<int>","sessionCount": "<int>","products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],"total": "<int>" })
 
 
 @app.errorhandler(500)
