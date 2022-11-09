@@ -1,6 +1,5 @@
 version: '3'
 
-
 services:
 
   billdb:
@@ -16,8 +15,6 @@ services:
       - billing-db:/var/lib/mysql
       - ./dump-db:/dump-db
     
-
-
 
   billapi:
       build: .
@@ -37,12 +34,6 @@ services:
       
       
 
-
-
-
-
-
-
 volumes:
   billing-db:
 
@@ -53,12 +44,3 @@ networks:
     external: true
 
 
-
-# version: "3"
-# services:
-#   app:
-#     build: .
-#     links:
-#       - db
-#     ports:
-#       - "5000:5000"
