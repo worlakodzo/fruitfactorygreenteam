@@ -1,6 +1,5 @@
 version: '3'
 
-
 services:
 
   billdb:
@@ -17,12 +16,10 @@ services:
       - ./dump-db:/dump-db
     
 
-
-
   billapi:
       build: .
       ports:
-        - "8085:5000"
+        - "8082:5000"
 
       environment:
         MYSQL_DATABASE: 'billdb'
@@ -37,12 +34,6 @@ services:
       
       
 
-
-
-
-
-
-
 volumes:
   billing-db:
 
@@ -53,12 +44,3 @@ networks:
     external: true
 
 
-
-# version: "3"
-# services:
-#   app:
-#     build: .
-#     links:
-#       - db
-#     ports:
-#       - "5000:5000"
