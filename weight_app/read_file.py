@@ -6,6 +6,7 @@ import MySQLdb.cursors
 
 
 def save_container_record(c_id, c_weight, c_unit):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     qry = ("INPUT INTO containers registered(container_id, weight, unit) values(%s, %s, %s,)", c_id, c_weight, c_unit)
     return qry
 
