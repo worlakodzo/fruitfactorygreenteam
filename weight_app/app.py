@@ -29,13 +29,11 @@ def get_weight():
     if request.method=="POST":
         json_data = request.get_json()
         direction = json_data["direction"]
-        license = json_data["license"]
-        if len(license)==0:
-            license = "na"
+        truck = json_data["license"]
+        if len(truck)==0:
+            truck = "na"
         containers = json_data["containers"]
         weight = json_data["weight"]
-        unit = json_data["unit"]
-        force = json_data["force"]
    
         produce=json_data["produce"]
 
@@ -43,29 +41,62 @@ def get_weight():
         date=datetime.now()
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT INTO tbl_weight  (direction, license, containers, weight, unit, produce, forced, date) VALUES(%s, %s, %s, %s, %s, %s,%s,%s)', (direction, license, containers, weight, unit, produce, force, date))    
-        record_id = cursor.lastrowid
-        mysql.connection.commit()
-
+        
         if direction == "IN":
+            cursor.execute('INSERT INTO transactions  (direction, truck, containers, bruto, truckTara, produce, datetime, neto) VALUES(%s, %s, %s, %s, %s,%s,%s,%s)', (direction, truck, containers, weight, neto, produce, date, neto))    
+            record_id = cursor.lastrowid
+            mysql.connection.commit()
             bruto = weight
-            resp = { "id": record_id, "truck": license, "bruto": bruto }
+            resp = { "id": record_id, "truck": truck, "bruto": bruto }
 
         elif direction == "OUT":
             neto = weight
-            resp = { "id": record_id, "truck": license, "neto": neto }
+            resp = { "id": record_id, "truck": truck, "neto": neto }
         
          # Data structure of JSON format
         reponse = jsonify(resp) # Converts your data strcuture into JSON format
-        
-       
         reponse.status_code = 202 # Provides a response status code of 202 which is "Accepted" 
-
         return reponse # Returns the HT
 
-    elif request.method=="GET":
+    # THE CODE BELOW HAS BEEN IMPLEMENTED BY NOBEL PERHAPS EVEN BETTER THERE SO USE THAT VERSION
+    # elif request.method=="GET":
+        query = None
+        # Getting the parameters passed        
+        date_from = request.args.get('from', None)
+        date_to = request.args.get('to', None)
+        _filter = request.args.get('filter', None) # None here means there is no filter. It does not mean NONE which is a parameter
+
+        # Replacing default defaulf parameters with passed parameters if avaiilable
+        _from = date_from if date_from != None else datetime.today().replace(hour=0, minute=0, microsecond=0, second=0)
+        _to = date_to if date_to != None else datetime.now()
+
+
+        if _filter == None:
+            query = f"SELECT * FROM tbl_weight WHERE date between {_from} AND {_to}"
+
+        else:
+            query = ("SELECT * FROM tbl_weight WHERE direction= ,(upper(%s)) AND date between %s AND %s", str(_filter), _from, _to)
+
+        try:
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute(query)    
+            records = cursor.fetchall()
+        except IOError as e:
+            print("Filter or date parameters might be wrong")
+            
+            resp = jsonify({"from": _from, "to": _to, "filter": request.args.get('filter')})
+            resp.status_code=404
+            return resp
+             
+
+
         return "<h1>weight<h1>"
     return 404
+
+
+
+
+
 
 @app.route("/batch-weight/<file_name>", methods=["POST"])
 def get_batch_weight(file_name):
@@ -93,6 +124,7 @@ def get_batch_weight(file_name):
         resp = jsonify("File not found, better check the extention or filename")
         resp.status_code=404
         return resp
+
 
 
 

@@ -1,3 +1,16 @@
+from flask_mysqldb import MySQL
+import MySQLdb.cursors
+
+
+
+
+
+def save_container_record(c_id, c_weight, c_unit):
+    qry = ("INPUT INTO containers registered(container_id, weight, unit) values(%s, %s, %s,)", c_id, c_weight, c_unit)
+    return qry
+
+
+
 def read_file(a, ext):
     sum = 0
     unit = None
@@ -7,6 +20,7 @@ def read_file(a, ext):
         # When unit is in kg
         try: 
             for i in a:
+                save_container_record()
                 sum+=int(i['kg'])
             unit = 'kg'
         # When unit is in lbs
@@ -21,3 +35,4 @@ def read_file(a, ext):
             sum+=int(i['weight'])
         unit = i['unit']
         return sum, unit
+
