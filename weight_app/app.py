@@ -1,15 +1,15 @@
-from flask import Flask,request,jsonify
+from flask import Flask,request,jsonify,Response
 from flask_mysqldb import MySQL
 import datetime
  
  
 app=Flask(__name__)
 
-# mysql config needs to be deleted.. 
-# app.config['MYSQL_HOST']='localhost'
-# app.config['MYSQL_USER']='root'
-# app.config['MYSQL_PASSWORD']='passwd'
-# app.config['MYSQL_DB']='weight'
+ 
+app.config['MYSQL_HOST']='localhost'
+app.config['MYSQL_USER']='root'
+app.config['MYSQL_PASSWORD']='passwd'
+app.config['MYSQL_DB']='weight'
 
 mysql=MySQL(app)
 @app.route('/')
@@ -36,9 +36,8 @@ def get_session(id):
             temp_dict['neto']=session_details[0][5]   
     # for item in results:
     #     temp_dict[item]
-    resp=jsonify(temp_dict)
-    resp.status_code(200)
-    return resp
+ 
+    return temp_dict,201
         
 @app.route('/weight')
 def get_weight():
@@ -60,10 +59,8 @@ def get_weight():
             for row in transanction_Details:
                 dict=row_to_dict(row)
                 final_output.append(dict)              
-            resp=jsonify(final_output)
-            resp.status_code(200)
-            return resp
-
+ 
+            return final_output,201
     else:         
         results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE datetime BETWEEN %s AND %s  ORDER BY direction",(begin,end))    
         if results>0:                   
@@ -72,9 +69,8 @@ def get_weight():
             for row in transanction_Details:
                 dict=row_to_dict(row)
                 final_output.append(dict)
-            resp=jsonify(final_output)
-            resp.status_code(200)
-            return resp
+     
+            return final_output,201
 
             
     return ("weight is empty")
@@ -85,9 +81,8 @@ def row_to_dict(row):
         temp_dict[temp_dict_list[i]]=item
         if i==len(row)-1:
             temp_dict[temp_dict_list[i]]=list(item.split(','))
-    resp=jsonify(temp_dict)
-    resp.status_code(200)
-    return resp
+    
+    return temp_dict
 
 
 @app.route("/weight-api/health", methods=["GET"])
