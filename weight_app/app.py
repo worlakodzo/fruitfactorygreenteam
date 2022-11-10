@@ -5,14 +5,13 @@ import datetime
  
 app=Flask(__name__)
 
- 
-app.config['MYSQL_HOST']='localhost'
-app.config['MYSQL_USER']='root'
-app.config['MYSQL_PASSWORD']='passwd'
-app.config['MYSQL_DB']='weight'
+# mysql config needs to be deleted.. 
+# app.config['MYSQL_HOST']='localhost'
+# app.config['MYSQL_USER']='root'
+# app.config['MYSQL_PASSWORD']='passwd'
+# app.config['MYSQL_DB']='weight'
 
 mysql=MySQL(app)
-
 @app.route('/')
 def home():
     return ("hello green weight")
@@ -37,7 +36,9 @@ def get_session(id):
             temp_dict['neto']=session_details[0][5]   
     # for item in results:
     #     temp_dict[item]
-    return [temp_dict]
+    resp=jsonify(temp_dict)
+    resp.status_code(200)
+    return resp
         
 @app.route('/weight')
 def get_weight():
@@ -59,7 +60,9 @@ def get_weight():
             for row in transanction_Details:
                 dict=row_to_dict(row)
                 final_output.append(dict)              
-            return final_output
+            resp=jsonify(final_output)
+            resp.status_code(200)
+            return resp
 
     else:         
         results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE datetime BETWEEN %s AND %s  ORDER BY direction",(begin,end))    
@@ -69,7 +72,9 @@ def get_weight():
             for row in transanction_Details:
                 dict=row_to_dict(row)
                 final_output.append(dict)
-            return final_output
+            resp=jsonify(final_output)
+            resp.status_code(200)
+            return resp
 
             
     return ("weight is empty")
@@ -80,7 +85,9 @@ def row_to_dict(row):
         temp_dict[temp_dict_list[i]]=item
         if i==len(row)-1:
             temp_dict[temp_dict_list[i]]=list(item.split(','))
-    return temp_dict
+    resp=jsonify(temp_dict)
+    resp.status_code(200)
+    return resp
 
 
 @app.route("/weight-api/health", methods=["GET"])
