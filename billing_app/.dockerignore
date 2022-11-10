@@ -33,3 +33,4 @@ controllers/
 datadir/
 entrypoint.sh
 in/
+.DS_Store
