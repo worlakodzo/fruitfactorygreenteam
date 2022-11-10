@@ -18,8 +18,8 @@ app = Flask(__name__)
     #             connection.commit()
        #return jsonify({"OK"}), 200
        
-"""
-health = HealthCheck(app, "/health")
+
+
 
 def health_db_status():
     #is_database_working = True
@@ -41,23 +41,11 @@ def health_db_status():
         return jsonify({"Health check not succesful":output}), 500
     #return jsonify({"Internal Server Error"}), 500
 
-#########health.add_check(health_db_status)
-
-"""
-#from app import db
-conn = psycopg2.connect("dbname=billdb user=billing")
-
-@app.route('/health')
-
-def health_db_status():
-    #db.engine.execute('SELECT 1')
-    cur = conn.cursor()
-    cur.execute('SELECT 1')
-    cur.close()
-    return jsonify({"OK"}), 200
 
 
-"""
+
+
+
 #from app import db
 conn = psycopg2.connect("dbname=billdb user=billing")
 
