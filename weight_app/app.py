@@ -60,37 +60,37 @@ def get_weight():
 
     # THE CODE BELOW HAS BEEN IMPLEMENTED BY NOBEL PERHAPS EVEN BETTER THERE SO USE THAT VERSION
     # elif request.method=="GET":
-        query = None
-        # Getting the parameters passed        
-        date_from = request.args.get('from', None)
-        date_to = request.args.get('to', None)
-        _filter = request.args.get('filter', None) # None here means there is no filter. It does not mean NONE which is a parameter
+        # query = None
+        # # Getting the parameters passed        
+        # date_from = request.args.get('from', None)
+        # date_to = request.args.get('to', None)
+        # _filter = request.args.get('filter', None) # None here means there is no filter. It does not mean NONE which is a parameter
 
-        # Replacing default defaulf parameters with passed parameters if avaiilable
-        _from = date_from if date_from != None else datetime.today().replace(hour=0, minute=0, microsecond=0, second=0)
-        _to = date_to if date_to != None else datetime.now()
+        # # Replacing default defaulf parameters with passed parameters if avaiilable
+        # _from = date_from if date_from != None else datetime.today().replace(hour=0, minute=0, microsecond=0, second=0)
+        # _to = date_to if date_to != None else datetime.now()
 
 
-        if _filter == None:
-            query = f"SELECT * FROM tbl_weight WHERE date between {_from} AND {_to}"
+        # if _filter == None:
+        #     query = f"SELECT * FROM tbl_weight WHERE date between {_from} AND {_to}"
 
-        else:
-            query = ("SELECT * FROM tbl_weight WHERE direction= ,(upper(%s)) AND date between %s AND %s", str(_filter), _from, _to)
+        # else:
+        #     query = ("SELECT * FROM tbl_weight WHERE direction= ,(upper(%s)) AND date between %s AND %s", str(_filter), _from, _to)
 
-        try:
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute(query)    
-            records = cursor.fetchall()
-        except IOError as e:
-            print("Filter or date parameters might be wrong")
+        # try:
+        #     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        #     cursor.execute(query)    
+        #     records = cursor.fetchall()
+        # except IOError as e:
+        #     print("Filter or date parameters might be wrong")
             
-            resp = jsonify({"from": _from, "to": _to, "filter": request.args.get('filter')})
-            resp.status_code=404
-            return resp
+        #     resp = jsonify({"from": _from, "to": _to, "filter": request.args.get('filter')})
+        #     resp.status_code=404
+        #     return resp
              
 
 
-        return "<h1>weight<h1>"
+        # return "<h1>weight<h1>"
     return 404
 
 
@@ -115,7 +115,7 @@ def get_batch_weight(file_name):
                 data = json.load(file)
 
         # Getting sum of the sum of weight from the containers read from the file.
-        sum,unit=read_file(data, extension)
+        sum,unit=read_file_save(data, extension)
 
         return jsonify({"neto":sum, "unit":unit})
     # Throwing an exception because file read failed...
