@@ -1,28 +1,33 @@
 from flask import Flask,request,jsonify
-from flask_mysqldb import MySQL
+from flask_app import app
+from db import mysql 
 import datetime
  
- 
- 
-app=Flask(__name__)
 
  
-app.config['MYSQL_HOST']='localhost'
-app.config['MYSQL_USER']='root'
-app.config['MYSQL_PASSWORD']='passwd'
-app.config['MYSQL_DB']='weight'
-app.config['MYSQL_CURSORCLASS']='DictCursor'
+# app.config['MYSQL_HOST']='db'
+# app.config['MYSQL_USER']='root'
+# app.config['MYSQL_PASSWORD']='passwd'
+# app.config['MYSQL_DB']='weight'
+# app.config['MYSQL_CURSORCLASS']='DictCursor'
 
-mysql=MySQL(app)
+
+# mysql=MySQL(app)
+# connection=mysql.connector.connect(user='root',password='root',host='db',port="3306",database='weight')
 @app.route('/')
-def home():
-    return ("hello green weight")
+def home():   
+    cur=mysql.connection.cursor()
+    cur.execute("SELECT * FROM transactions")
+    rows=cur.fetchall()
+    resp=jsonify(rows)
+    resp.status_code=200
+    return resp
 
 @app.route('/session/<id>')
 def get_session(id):     
-    id=int(id)
-     
+    id=int(id) 
     cur=mysql.connection.cursor()
+    
     results=cur.execute("SELECT direction,id,truck,bruto,truckTara,neto FROM transactions WHERE id LIKE %s",(id,))
     if results>0:
         session_details=cur.fetchall() 
@@ -36,11 +41,13 @@ def get_session(id):
         
 @app.route('/weight')
 def get_weight():
+  
+    cur=mysql.connection.cursor()
+    
     begin='0000-00-00 00:00:00.000000'
     end=datetime.datetime.now() 
     fil=''
-    cur=mysql.connection.cursor()     
-   
+ 
     if request.args.get('filter'):
         if request.args.get('from'):
             begin=request.args.get('from')
@@ -99,4 +106,4 @@ def get_health():
     })
   
 if __name__=="__main__":
-    app.run()
+    app.run(debug=True,host='0.0.0.0')
