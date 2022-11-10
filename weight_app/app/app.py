@@ -160,6 +160,55 @@ def read_file_save(a, ext):
         unit = i['unit']
         return sum, unit
 
+@app.route("/item/<id>")
+def get_item(id):
+    if not id:
+        resp=jsonify({"message":"enter and Id"})
+        resp.status_code=404
+        return resp
+    begin='0000-00-00 00:00:00.000000'
+    end=datetime.datetime.now() 
+    if request.args.get('from'):
+        begin=request.args.get('from')
+    if request.args.get('to'):
+        end=request.args.get('to')
+
+    cur=mysql.connection.cursor()    
+    results=cur.execute("SELECT id,truckTara FROM transactions WHERE truck LIKE %s AND datetime BETWEEN %s AND %s ORDER BY datetime DESC",(id,begin,end))
+    if results>0:
+        sessions=[]
+        first_tara=0
+        session_details=cur.fetchall()
+        for row in session_details:
+            sessions.append(row['id'])
+            if first_tara==0:
+                first_tara=row['truckTara']
+        resp={"id":id,"tara":first_tara,"sessions":sessions}
+        resp=jsonify(resp) 
+        resp.status_code=200
+        return resp
+    resp=jsonify({"message":"session not found"})
+    resp.status_code=404
+    return resp
+
+    
+@app.route("/unknown")
+def get_unknown():
+    cur=mysql.connection.cursor()    
+    results=cur.execute("SELECT container_id FROM containers_registered WHERE weight IS NULL")
+    if results>0:
+        containers=[]        
+        session_details=cur.fetchall()
+        for row in session_details:
+            containers.append(row['container_id']) 
+        resp={"containers":containers}
+        resp=jsonify(resp) 
+        resp.status_code=200
+        return resp
+    resp=jsonify({"message":"no such container"})
+    resp.status_code=404
+    return resp
+
 @app.route("/batch-weight/<file_name>", methods=["POST"])
 def get_batch_weight(file_name):
 
