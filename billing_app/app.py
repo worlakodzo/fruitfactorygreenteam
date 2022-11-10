@@ -1,8 +1,7 @@
 from flask import Flask, jsonify, request, abort
-#from app import db
-from db import connection
-from app import  DatabaseSession, health, HealthCheck
+#from app import DatabaseSession, health, HealthCheck
 import os.path
+import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
 
@@ -18,7 +17,8 @@ app = Flask(__name__)
     #             mycursor.execute(stmt)
     #             connection.commit()
        #return jsonify({"OK"}), 200
-
+       
+"""
 health = HealthCheck(app, "/health")
 
 def health_db_status():
@@ -38,6 +38,20 @@ def health_db_status():
 
 health.add_check(health_db_status)
 
+"""
+#from app import db
+conn = psycopg2.connect("dbname=billdb user=billing")
+
+@app.route('/health')
+
+def health_db_status():
+    #db.engine.execute('SELECT 1')
+    cur = conn.cursor()
+    cur.execute('SELECT 1')
+    cur.close()
+    return jsonify({"OK"}), 200
+
+
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
 
@@ -53,6 +67,7 @@ def billing_index():
     except Exception as err:
         abort(500)
 
+from db import connection
 @app.route('/provider', methods=['GET', 'POST', 'PUT'])
 def provider():
     if request.method == 'POST':
