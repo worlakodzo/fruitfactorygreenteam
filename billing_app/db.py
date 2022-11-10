@@ -1,6 +1,7 @@
 import mysql.connector
 import socket
 dbhost=socket.gethostbyname('billdb')
+print(dbhost)
 connection = mysql.connector.connect(
 
     host=dbhost,
