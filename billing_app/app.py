@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request, abort
 #from app import db
 from db import connection
-from app import  DatabaseSession, health, HealthCheck
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
@@ -18,25 +17,30 @@ app = Flask(__name__)
     #             mycursor.execute(stmt)
     #             connection.commit()
        #return jsonify({"OK"}), 200
-
-health = HealthCheck(app, "/health")
-
+#from app import  DatabaseSession, health, HealthCheck
+#health = HealthCheck(app, "/health")
+@app.route('/health', methods = ["GET"])
 def health_db_status():
-    is_database_working = True
-    output = 'OK'
+    #is_database_working = True
+    #output = 'OK'
     #return jsonify({"OK"}), 200
 
     try:
-        session = DatabaseSession.get_database_session()
+        #session = DatabaseSession.get_database_session()
         #db.session.execute('select 1')
-        session.execute('select 1')
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            stmt = "SELECT * 1"
+            mycursor.execute(stmt)
+            stmt_result = mycursor.fetchall()
+            return jsonify({"Health check successful"}), 200
     except Exception as e:
         output = str(e)
-        is_database_working = False
-    return is_database_working, output
+        #is_database_working = False
+        return jsonify({"Health check not succesful":output}), 500
     #return jsonify({"Internal Server Error"}), 500
 
-health.add_check(health_db_status)
+#########health.add_check(health_db_status)
 
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
