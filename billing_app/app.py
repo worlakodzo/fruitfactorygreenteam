@@ -1,23 +1,42 @@
 from flask import Flask, jsonify, request, abort
-from db import connection, mycursor
+#from app import db
+from db import connection
+from app import  DatabaseSession, health, HealthCheck
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
 
 
 app = Flask(__name__)
-@app.route("/billing-api/health")
-def index_test_bd():
+#@app.route('/health', methods = ["GET"])
+#def index_test_bd():
+    #if mycursor == connection.cursor():
+
     # with connection.cursor() as mycursor:
     #             mycursor = connection.cursor(dictionary=True)
     #             stmt = "select 1"
     #             mycursor.execute(stmt)
     #             connection.commit()
-    return jsonify({"message":"billing server health check successful"}), 200
+       #return jsonify({"OK"}), 200
 
+health = HealthCheck(app, "/health")
 
+def health_db_status():
+    is_database_working = True
+    output = 'OK'
+    #return jsonify({"OK"}), 200
 
+    try:
+        session = DatabaseSession.get_database_session()
+        #db.session.execute('select 1')
+        session.execute('select 1')
+    except Exception as e:
+        output = str(e)
+        is_database_working = False
+    return is_database_working, output
+    #return jsonify({"Internal Server Error"}), 500
 
+health.add_check(health_db_status)
 
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
@@ -33,6 +52,47 @@ def billing_index():
 
     except Exception as err:
         abort(500)
+
+@app.route('/provider', methods=['GET', 'POST', 'PUT'])
+def provider():
+    if request.method == 'POST':
+        body = request.get_json()
+        id = body['id']
+        name = body['name']
+        if id != '' and name != '':
+            with connection.cursor() as provider:
+                provider = connection.cursor(dictionary=True)
+                do = "INSERT INTO Provider (`name`) VALUES (%s)"
+                provider.execute(do)
+                connection.commit()
+                return jsonify(id), 201
+        else:
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204
+            
+    else:
+        with connection.cursor() as provider:
+            do = "SELECT * FROM Provider"
+            provider.execute(do)
+            result = provider.fetchall()
+            return jsonify(result)
+
+
+
+@app.route('/provider/<id>', methods=['GET', 'POST', 'PUT'])
+def update_provider_name(id):
+    if request.method == 'PUT':
+        body = request.args.get()
+        name = body['name']
+        if name != '':
+            with connection.cursor() as provider:
+                provider = connection.cursor(dictionary=True)
+                do = "INSERT INTO Provider (`name`) VALUES (%s)"
+                provider.execute(do)
+                connection.commit()
+                return jsonify(name), 201
+        else:
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204
+            
 
 
 @app.route('/weight', methods = ["POST"])
@@ -175,7 +235,7 @@ def internal_server_error(error):
     return jsonify({
         "success": False,
         "error": 500,
-        "msg": "Internal Server Error"
+        "message": "Internal Server Error"
     })
 
 
