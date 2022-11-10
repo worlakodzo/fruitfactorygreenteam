@@ -29,7 +29,7 @@ function deploy_to_test(){
     docker-compose build
     docker-compose up -d
     cd ../weight_app
-    docker-compose 
+    docker-compose build
     docker-compose up -d
 }
 
@@ -40,7 +40,7 @@ function deploy_to_production(){
     docker-compose build
     docker-compose up -d
     cd ../weight_app
-    docker-compose 
+    docker-compose build
     docker-compose up -d
 }
 
