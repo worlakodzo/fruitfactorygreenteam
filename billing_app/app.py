@@ -101,7 +101,7 @@ def Truck_Post():
                 try:            
                     mycursor.execute(stmt, val)
                     connection.commit()
-                    return jsonify({"msg": "Truck saved successfully!"}), 201
+                    return jsonify({"message": "Truck data saved successfully!"}), 201
                 except:
                     return jsonify({"msg": "error posting "}), 204
                     
