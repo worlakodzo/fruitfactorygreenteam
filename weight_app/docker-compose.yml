@@ -1,47 +1,19 @@
 version: '3'
-
-
 services:
+  app:
+    build: ./app
+    links:
+      - db
+    ports:
+      - "5000:5000"
 
-  # billdb:
-  #   image: mysql:5.7
-  #   restart: always
-  #   environment:
-  #     MYSQL_DATABASE: 'billdb'
-  #     MYSQL_USER: 'billing'
-  #     MYSQL_PASSWORD: 'billing1password'
-  #     MYSQL_ROOT_PASSWORD: 'root1password'
-  #   ports:
-  #     - '3307:3306'
-  #   expose:
-  #     - '3306'
-  #   volumes:
-  #     - billing-db:/var/lib/mysql
-  #     - /dump-db:/dump-db
+  db:
+    image: mysql:8.0.21
+    ports:
+      - "30000:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/:ro
 
-
-
-  weightapi:
-      build: .
-      ports:
-        - "8081:5000"
-
-      environment:
-        MYSQL_DATABASE: 'billdb'
-        MYSQL_USER: 'billing'
-        MYSQL_PASSWORD: 'billing1password'
-        MYSQL_ROOT_PASSWORD: 'root1password'
-        MYSQL_PORT: '3307'
-        MYSQL_HOST: 'billdb'
-
-#       depends_on:
-#         - billdb
-
-
-
-
-
-
-# volumes:
-#   billing-db:
-
+ 
