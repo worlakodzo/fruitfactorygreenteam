@@ -2,8 +2,8 @@ FROM python:3.8.5-alpine
 #FROM python:3.12.0a1-alpine3.15
 
 WORKDIR /app
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=127.0.0.1
+# ENV FLASK_APP=app.py
+# ENV FLASK_RUN_HOST=127.0.0.1
 RUN python -m pip install --upgrade pip
 
 EXPOSE 5000

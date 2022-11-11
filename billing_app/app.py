@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, abort
 #from app import DatabaseSession, health, HealthCheck
 import os.path
-import psycopg2
+# import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
 
@@ -40,13 +40,12 @@ health.add_check(health_db_status)
 
 """
 #from app import db
-conn = psycopg2.connect("dbname=billdb user=billing")
+# conn = psycopg2.connect("dbname=billdb user=billing")
 
 @app.route('/health')
-
 def health_db_status():
     #db.engine.execute('SELECT 1')
-    cur = conn.cursor()
+    cur = connection.cursor()
     cur.execute('SELECT 1')
     cur.close()
     return jsonify({"OK"}), 200
@@ -136,9 +135,10 @@ def rates():
         body = request.get_json()
         # name = body['name']
         file = body['file']
-        print(os.path.isfile(file))
+        filepath = f'./in/{file}'
+        print(os.path.isfile(f'./in/{file}'))
         # check if file exist
-        if os.path.isfile(file):
+        if os.path.isfile(f'./in/{file}'):
             # df = pd.read_excel(file)
             data = []
             df = load_workbook(file)
@@ -185,7 +185,16 @@ def getbill(id):
     t2 = request.args.get('t2')
 
     # expected return
-    return jsonify({"id": 12,"name": "<str>","from": "<str>","to": "<str>","truckCount": "<int>","sessionCount": "<int>","products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],"total": "<int>" })
+    return jsonify({
+        "id": 12,
+        "name": "<str>",
+        "from": "<str>",
+        "to": "<str>",
+        "truckCount": "<int>",
+        "sessionCount": "<int>",
+        "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
+        "total": "<int>" 
+    })
 
 
 #Endpoint for post truck    
