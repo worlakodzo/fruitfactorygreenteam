@@ -2,22 +2,28 @@ version: '3'
 
 services:
 
-  billdb:
+  billdbtest:
     image: mysql:5.7
     restart: always
+    networks:
+      - backend
     environment:
       MYSQL_DATABASE: 'billdb'
       MYSQL_USER: 'billing'
       MYSQL_PASSWORD: 'billing1password'
       MYSQL_ROOT_PASSWORD: 'root1password'
-    
+
+    container_name: billing-db-test
     volumes:
       - billing-db:/var/lib/mysql
       - ./dump-db:/dump-db
     
 
-  billapi:
+  billapitest:
       build: .
+      restart: on-failure
+      networks:
+        - backend
       ports:
         - "8082:5000"
 
@@ -28,9 +34,9 @@ services:
         MYSQL_ROOT_PASSWORD: 'root1password'
         MYSQL_PORT: '3306'
         MYSQL_HOST: 'billdb'
-
+      container_name: billing-api-test
       depends_on:
-        - billdb
+        - billdbtest
       
       
 
@@ -39,8 +45,6 @@ volumes:
 
 
 networks:
-  defualt:
-    name: backend
-    external: true
+  backend: {}
 
 
