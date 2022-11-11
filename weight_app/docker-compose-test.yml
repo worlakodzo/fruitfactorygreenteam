@@ -8,10 +8,10 @@ services:
     networks:
       - weighttestbackend
     environment:
-      MYSQL_DATABASE: 'weightdb'
+      MYSQL_DATABASE: 'weight'
       MYSQL_USER: 'weight'
       MYSQL_PASSWORD: 'weight1password'
-      MYSQL_ROOT_PASSWORD: 'root1password'
+      MYSQL_ROOT_PASSWORD: 'root'
 
     container_name: weight-db-test
     volumes:
@@ -32,7 +32,7 @@ services:
         MYSQL_DATABASE: 'weight'
         MYSQL_USER: 'weight'
         MYSQL_PASSWORD: 'weight1password'
-        MYSQL_ROOT_PASSWORD: 'root1password'
+        MYSQL_ROOT_PASSWORD: 'root'
         MYSQL_PORT: '3306'
         MYSQL_HOST: 'db'
       container_name: weight-api-test
