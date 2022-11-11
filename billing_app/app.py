@@ -40,15 +40,14 @@ health.add_check(health_db_status)
 
 """
 #from app import db
-conn = psycopg2.connect("dbname=billdb user=billing")
-
-@app.route('/health')
-
+#conn = psycopg2.connect("dbname=billdb user=billing")
+ 
+@app.route('/billing-api/health')
 def health_db_status():
-    #db.engine.execute('SELECT 1')
-    cur = conn.cursor()
-    cur.execute('SELECT 1')
-    cur.close()
+    # #db.engine.execute('SELECT 1')
+    # cur = conn.cursor()
+    # cur.execute('SELECT 1')
+    # cur.close()
     return jsonify({"OK"}), 200
 
 
