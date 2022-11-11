@@ -1,1 +1,5 @@
-__pycache__
+__pycache__/
+green/
+.pytest_cache/
+templates/
+.vscode/
