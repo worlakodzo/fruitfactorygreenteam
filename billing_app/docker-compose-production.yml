@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+
+  billdb:
+    image: mysql:5.7
+    restart: always
+    networks:
+      - backend
+    environment:
+      MYSQL_DATABASE: 'billdb'
+      MYSQL_USER: 'billing'
+      MYSQL_PASSWORD: 'billing1password'
+      MYSQL_ROOT_PASSWORD: 'root1password'
+
+    container_name: billing-db
+    volumes:
+      - billing-db:/var/lib/mysql
+      - ./dump-db:/dump-db
+    
+
+  billapi:
+      build: .
+      restart: on-failure
+      networks:
+        - backend
+      ports:
+        - "8082:5000"
+
+      environment:
+        MYSQL_DATABASE: 'billdb'
+        MYSQL_USER: 'billing'
+        MYSQL_PASSWORD: 'billing1password'
+        MYSQL_ROOT_PASSWORD: 'root1password'
+        MYSQL_PORT: '3306'
+        MYSQL_HOST: 'billdb'
+      container_name: billing-api
+      depends_on:
+        - billdb
+      
+      
+
+volumes:
+  billing-db:
+
+
+networks:
+  backend: {}
+
+

@@ -1,55 +1,30 @@
 from flask import Flask, jsonify, request, abort
-#from app import DatabaseSession, health, HealthCheck
+from db import connection
 import os.path
-# import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
+import requests
 
 
 app = Flask(__name__)
-#@app.route('/health', methods = ["GET"])
-#def index_test_bd():
-    #if mycursor == connection.cursor():
 
-    # with connection.cursor() as mycursor:
-    #             mycursor = connection.cursor(dictionary=True)
-    #             stmt = "select 1"
-    #             mycursor.execute(stmt)
-    #             connection.commit()
-       #return jsonify({"OK"}), 200
-       
-"""
-health = HealthCheck(app, "/health")
-
+ 
+@app.route('/billing-api/health')
 def health_db_status():
-    is_database_working = True
-    output = 'OK'
-    #return jsonify({"OK"}), 200
-
+    
     try:
-        session = DatabaseSession.get_database_session()
-        #db.session.execute('select 1')
-        session.execute('select 1')
+        
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            stmt = "select 1"
+            mycursor.execute(stmt)
+            stmt_result = mycursor.fetchone()
+            return jsonify({"status": "OK"}), 200
+
     except Exception as e:
-        output = str(e)
-        is_database_working = False
-    return is_database_working, output
-    #return jsonify({"Internal Server Error"}), 500
-
-health.add_check(health_db_status)
-
-"""
-#from app import db
-# conn = psycopg2.connect("dbname=billdb user=billing")
-
-@app.route('/health')
-def health_db_status():
-    #db.engine.execute('SELECT 1')
-    cur = connection.cursor()
-    cur.execute('SELECT 1')
-    cur.close()
-    return jsonify({"OK"}), 200
-
+        
+        return jsonify({"status":"failure"}), 500
+    
 
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
@@ -66,7 +41,7 @@ def billing_index():
     except Exception as err:
         abort(500)
 
-from db import connection
+
 @app.route('/provider', methods=['GET', 'POST', 'PUT'])
 def provider():
     if request.method == 'POST':
@@ -91,7 +66,6 @@ def provider():
             return jsonify(result)
 
 
-
 @app.route('/provider/<id>', methods=['GET', 'POST', 'PUT'])
 def update_provider_name(id):
     if request.method == 'PUT':
@@ -105,8 +79,7 @@ def update_provider_name(id):
                 connection.commit()
                 return jsonify(name), 201
         else:
-            return jsonify({"msg": " Unsuccessfull!!!"}), 204
-            
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204            
 
 
 @app.route('/weight', methods = ["POST"])
@@ -183,7 +156,7 @@ def rates():
 def getbill(id):
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
-
+    
     # expected return
     return jsonify({
         "id": 12,
@@ -198,7 +171,7 @@ def getbill(id):
 
 
 #Endpoint for post truck    
-@app.route("/Truck",methods=['POST'])
+@app.route("/truck",methods=['POST'])
 def Truck_Post():
         
     if request.method == 'POST':
@@ -233,7 +206,7 @@ def Truck_Post():
             # return jsonify(stmt_result)
 
 
-@app.route("/Truck/",methods=['PUT'])
+@app.route("/truck/",methods=['PUT'])
 def Truck_Put():
     
     if request.method == 'PUT':
@@ -252,6 +225,16 @@ def Truck_Put():
                 return jsonify ({"msg": "provider ID updated successfully! "}+truck_id), 201
     else:
             return jsonify({"msg": "Truck ID not found in the database "}), 204
+
+@app.route('/truck/<id>')
+def get_truckid(id):
+    t1 = request.args.get('t1')
+    t2 = request.args.get('t2')
+    param={'id':id,"from":t1,"to":t2}
+    reqResp=requests.get("url://weight_server:8081/item/<id>?from=t1&to=t2",params=param)
+    assert reqResp.status_code == 200
+    data=reqResp.json
+    return data
 
 
 @app.errorhandler(500)

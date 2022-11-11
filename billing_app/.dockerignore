@@ -29,8 +29,9 @@ build/
 .coverage
 .github/
 coverage.xml
+
+.DS_Store
 controllers/
 datadir/
 entrypoint.sh
 in/
-.DS_Store
