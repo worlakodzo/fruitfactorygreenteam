@@ -1,7 +1,5 @@
 from flask import Flask, jsonify, request, abort
-#from app import DatabaseSession, health, HealthCheck
 import os.path
-import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
 import requests
@@ -11,43 +9,22 @@ app = Flask(__name__)
 
  
 @app.route('/billing-api/health')
-def health_db_status():
-@app.route('/health', methods = ["GET"])
-#def index_test_bd():
-    #if mycursor == connection.cursor():
-
-    # with connection.cursor() as mycursor:
-    #             mycursor = connection.cursor(dictionary=True)
-    #             stmt = "select 1"
-    #             mycursor.execute(stmt)
-    #             connection.commit()
-    return jsonify({"status": "OK"}), 200
-
-       #return jsonify({"OK"}), 200
-       
-
-
 
 def health_db_status():
-    #is_database_working = True
-    #output = 'OK'
-    #return jsonify({"OK"}), 200
-
+    
     try:
-        #session = DatabaseSession.get_database_session()
-        #db.session.execute('select 1')
+        
         with connection.cursor() as mycursor:
             mycursor = connection.cursor(dictionary=True)
             stmt = "select 1"
             mycursor.execute(stmt)
             stmt_result = mycursor.fetchone()
-            return jsonify({"OK"}), 200
-    except Exception as e:
-        #output = str(e)
-        #is_database_working = False
-        return jsonify({"Server-error"}), 500
-    #return jsonify({"Internal Server Error"}), 500
+            return jsonify({"status": "OK"}), 200
 
+    except Exception as e:
+        
+        return jsonify({"status":"failure"}), 500
+    
 
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
