@@ -15,12 +15,10 @@ def home():
 @app.route('/session/<id>')
 def get_session(id):     
     id=int(id) 
-    cur=mysql.connection.cursor()
-    
+    cur=mysql.connection.cursor()    
     results=cur.execute("SELECT direction,id,truck,bruto,truckTara,neto FROM transactions WHERE id LIKE %s",(id,))
     if results>0:
-        session_details=cur.fetchall() 
-  
+        session_details=cur.fetchall()   
         resp=jsonify(session_details)
         resp.status_code=200
         return resp
@@ -46,7 +44,7 @@ def get_weight():
         produce = json_data["produce"]
 
         # Date and time of saving the weight data
-        date = datetime.now()
+        date = datetime.datetime.now()
 
         cursor = mysql.connection.cursor()
 
@@ -67,24 +65,26 @@ def get_weight():
         return reponse  
     else:
         cur=mysql.connection.cursor()        
-        begin='0000-00-00 00:00:00.000000'
+        begin='0000-00-00 00:00:00.000000'         
         end=datetime.datetime.now() 
-        fil=''
-    
-        if request.args.get('filter'):
+        
+            
+        if request.args.get('filter'):          
             if request.args.get('from'):
                 begin=request.args.get('from')
+                
             if request.args.get('to'): 
                 end=request.args.get('to') 
-            fil=request.args.get('filter')             
-            results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE direction LIKE %s AND datetime BETWEEN %s AND %s",(fil,begin,end))
-            if results>0:         
+                           
+            directions=request.args.get('filter')                           
+            results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE direction LIKE {} AND datetime BETWEEN %s AND %s;".format(directions),(begin,end))                   
+            if results>0:
                 transanction_Details=cur.fetchall()               
                 resp=jsonify(transanction_Details)
                 resp.status_code=200    
                 return resp
         else:         
-            results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE datetime BETWEEN %s AND %s  ORDER BY direction",(begin,end))    
+            results=cur.execute("SELECT id,direction,bruto,neto,produce,containers FROM transactions WHERE datetime BETWEEN %s AND %s ORDER BY direction",(begin,end))    
             if results>0:                   
                 transanction_Details=cur.fetchall() 
                 resp=jsonify(transanction_Details)
@@ -191,7 +191,7 @@ def get_item(id):
     resp.status_code=404
     return resp
 
-    
+
 @app.route("/unknown")
 def get_unknown():
     cur=mysql.connection.cursor()    
@@ -208,6 +208,7 @@ def get_unknown():
     resp=jsonify({"message":"no such container"})
     resp.status_code=404
     return resp
+
 
 @app.route("/batch-weight/<file_name>", methods=["POST"])
 def get_batch_weight(file_name):
@@ -235,8 +236,6 @@ def get_batch_weight(file_name):
             "File not found, better check the extention or filename")
         resp.status_code = 404
         return resp
-
-
    
 
 @app.route("/weight-api/health", methods=["GET"])
@@ -261,4 +260,4 @@ def get_health():
     })
   
 if __name__=="__main__":
-    app.run(debug=True,host='0.0.0.0')
+    app.run(host='0.0.0.0')
