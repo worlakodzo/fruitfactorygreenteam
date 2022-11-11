@@ -8,7 +8,7 @@ connection = mysql.connector.connect(
     user="billing",
     password="billing1password",
     database="billdb",
-    port=3306
+    port=3307
 )
 
 mycursor = connection.cursor()

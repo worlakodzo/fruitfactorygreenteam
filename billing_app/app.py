@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, abort
+from db import connection
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
@@ -9,7 +10,6 @@ app = Flask(__name__)
 
  
 @app.route('/billing-api/health')
-
 def health_db_status():
     
     try:
@@ -41,7 +41,7 @@ def billing_index():
     except Exception as err:
         abort(500)
 
-from db import connection
+
 @app.route('/provider', methods=['GET', 'POST', 'PUT'])
 def provider():
     if request.method == 'POST':
@@ -66,7 +66,6 @@ def provider():
             return jsonify(result)
 
 
-
 @app.route('/provider/<id>', methods=['GET', 'POST', 'PUT'])
 def update_provider_name(id):
     if request.method == 'PUT':
@@ -80,8 +79,7 @@ def update_provider_name(id):
                 connection.commit()
                 return jsonify(name), 201
         else:
-            return jsonify({"msg": " Unsuccessfull!!!"}), 204
-            
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204            
 
 
 @app.route('/weight', methods = ["POST"])
@@ -110,9 +108,10 @@ def rates():
         body = request.get_json()
         # name = body['name']
         file = body['file']
-        print(os.path.isfile(file))
+        filepath = f'./in/{file}'
+        print(os.path.isfile(f'./in/{file}'))
         # check if file exist
-        if os.path.isfile(file):
+        if os.path.isfile(f'./in/{file}'):
             # df = pd.read_excel(file)
             data = []
             df = load_workbook(file)
@@ -159,7 +158,16 @@ def getbill(id):
     t2 = request.args.get('t2')
     
     # expected return
-    return jsonify({"id": 12,"name": "<str>","from": "<str>","to": "<str>","truckCount": "<int>","sessionCount": "<int>","products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],"total": "<int>" })
+    return jsonify({
+        "id": 12,
+        "name": "<str>",
+        "from": "<str>",
+        "to": "<str>",
+        "truckCount": "<int>",
+        "sessionCount": "<int>",
+        "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
+        "total": "<int>" 
+    })
 
 
 #Endpoint for post truck    
@@ -227,9 +235,6 @@ def get_truckid(id):
     assert reqResp.status_code == 200
     data=reqResp.json
     return data
-
-
-   
 
 
 @app.errorhandler(500)
