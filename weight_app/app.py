@@ -51,9 +51,14 @@ def get_weight():
             resp = {"id": record_id, "truck": truck, "bruto": bruto}
 
         elif direction == "OUT":
+            cursor.execute('SELECT * FROM transactions WHERE truck=%s', truck)
+            mysql.connection.commit()
             record_id = cursor.lastrowid
             neto = weight
             resp = {"id": record_id, "truck": truck, "neto": neto}
+
+        elif direction == "NONE":
+            return ""
 
          # Data structure of JSON format
         # Converts your data strcuture into JSON format
