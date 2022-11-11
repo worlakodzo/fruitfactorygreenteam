@@ -1,13 +1,17 @@
 from flask import Flask, jsonify, request, abort
 #from app import DatabaseSession, health, HealthCheck
 import os.path
-#import psycopg2
+import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
 import requests
 
 
 app = Flask(__name__)
+
+ 
+@app.route('/billing-api/health')
+def health_db_status():
 @app.route('/health', methods = ["GET"])
 #def index_test_bd():
     #if mycursor == connection.cursor():
@@ -17,6 +21,8 @@ app = Flask(__name__)
     #             stmt = "select 1"
     #             mycursor.execute(stmt)
     #             connection.commit()
+    return jsonify({"status": "OK"}), 200
+
        #return jsonify({"OK"}), 200
        
 
