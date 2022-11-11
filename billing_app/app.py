@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, abort
+from db import connection
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
@@ -9,7 +10,6 @@ app = Flask(__name__)
 
  
 @app.route('/billing-api/health')
-
 def health_db_status():
     
     try:
@@ -41,7 +41,7 @@ def billing_index():
     except Exception as err:
         abort(500)
 
-from db import connection
+
 @app.route('/provider', methods=['GET', 'POST', 'PUT'])
 def provider():
     if request.method == 'POST':
@@ -66,7 +66,6 @@ def provider():
             return jsonify(result)
 
 
-
 @app.route('/provider/<id>', methods=['GET', 'POST', 'PUT'])
 def update_provider_name(id):
     if request.method == 'PUT':
@@ -80,8 +79,7 @@ def update_provider_name(id):
                 connection.commit()
                 return jsonify(name), 201
         else:
-            return jsonify({"msg": " Unsuccessfull!!!"}), 204
-            
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204            
 
 
 @app.route('/weight', methods = ["POST"])
