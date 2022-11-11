@@ -18,7 +18,7 @@ def health_db_status():
     #             stmt = "select 1"
     #             mycursor.execute(stmt)
     #             connection.commit()
-    return jsonify({"OK"}), 200
+    return jsonify({"status": "OK"}), 200
 
 
 @app.route('/', methods = ["GET", "POST", "PUT"])

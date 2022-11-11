@@ -5,6 +5,8 @@ services:
   billdb:
     image: mysql:5.7
     restart: always
+    networks:
+      - backend
     environment:
       MYSQL_DATABASE: 'billdb'
       MYSQL_USER: 'billing'
@@ -19,6 +21,9 @@ services:
 
   billapi:
       build: .
+      restart: on-failure
+      networks:
+        - backend
       ports:
         - "8082:5000"
 
@@ -40,8 +45,6 @@ volumes:
 
 
 networks:
-  defualt:
-    name: backend
-    external: true
+  backend: {}
 
 
