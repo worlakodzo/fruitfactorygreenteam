@@ -1,25 +1,30 @@
 from flask import Flask, jsonify, request, abort
-#from app import DatabaseSession, health, HealthCheck
 import os.path
-#import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
+import requests
 
 
 app = Flask(__name__)
 
  
 @app.route('/billing-api/health')
+
 def health_db_status():
-    #if mycursor == connection.cursor():
+    
+    try:
+        
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            stmt = "select 1"
+            mycursor.execute(stmt)
+            stmt_result = mycursor.fetchone()
+            return jsonify({"status": "OK"}), 200
 
-    # with connection.cursor() as mycursor:
-    #             mycursor = connection.cursor(dictionary=True)
-    #             stmt = "select 1"
-    #             mycursor.execute(stmt)
-    #             connection.commit()
-    return jsonify({"status": "OK"}), 200
-
+    except Exception as e:
+        
+        return jsonify({"status":"failure"}), 500
+    
 
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
@@ -152,13 +157,13 @@ def rates():
 def getbill(id):
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
-
+    
     # expected return
     return jsonify({"id": 12,"name": "<str>","from": "<str>","to": "<str>","truckCount": "<int>","sessionCount": "<int>","products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],"total": "<int>" })
 
 
 #Endpoint for post truck    
-@app.route("/Truck",methods=['POST'])
+@app.route("/truck",methods=['POST'])
 def Truck_Post():
         
     if request.method == 'POST':
@@ -193,7 +198,7 @@ def Truck_Post():
             # return jsonify(stmt_result)
 
 
-@app.route("/Truck/",methods=['PUT'])
+@app.route("/truck/",methods=['PUT'])
 def Truck_Put():
     
     if request.method == 'PUT':
@@ -212,6 +217,19 @@ def Truck_Put():
                 return jsonify ({"msg": "provider ID updated successfully! "}+truck_id), 201
     else:
             return jsonify({"msg": "Truck ID not found in the database "}), 204
+
+@app.route('/truck/<id>')
+def get_truckid(id):
+    t1 = request.args.get('t1')
+    t2 = request.args.get('t2')
+    param={'id':id,"from":t1,"to":t2}
+    reqResp=requests.get("url://weight_server:8081/item/<id>?from=t1&to=t2",params=param)
+    assert reqResp.status_code == 200
+    data=reqResp.json
+    return data
+
+
+   
 
 
 @app.errorhandler(500)
