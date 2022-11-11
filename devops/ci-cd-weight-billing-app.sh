@@ -1,7 +1,5 @@
 #!/bin/bash
-#create cicd gmail account
 FROM_ADDRESS="greenteamcicd@gmail.com"
-#create group cicd email group for members
 TO_ADDRESS="greenteamcicd@gmail.com"
 
 SUBJECT="CICD DEPLOYMENT"
@@ -10,8 +8,6 @@ TEST_SUCCESS_BODY="ATTENTION!!! Test Run passed."
 DEPLOYMENT_SUCCESS="Deployment is successful"
 
 FAILED_BODY="ATTENTION!!! Test Run Failed."
-
-# Login as cicd account at https://myaccount.google.com/ and create an app token under "Security" >> "Signing in to google" >> "App Passwords"
 APP_TOKEN="ucairqdcrdnvsfbl"
 
 
@@ -29,7 +25,7 @@ function deploy_to_test(){
     docker-compose build
     docker-compose up -d
     cd ../weight_app
-    docker-compose 
+    docker-compose build
     docker-compose up -d
 }
 
@@ -40,7 +36,7 @@ function deploy_to_production(){
     docker-compose build
     docker-compose up -d
     cd ../weight_app
-    docker-compose 
+    docker-compose build
     docker-compose up -d
 }
 
@@ -50,7 +46,7 @@ function run_test_script(){
     echo "#######Testing Completed...########"
     
     if [[ $? == 0 ]]; then
-        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
+        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $DEPLOYMENT_SUCCESS -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
         deploy_to_production
         
     else 
