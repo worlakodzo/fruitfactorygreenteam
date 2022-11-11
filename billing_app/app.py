@@ -1,14 +1,16 @@
 from flask import Flask, jsonify, request, abort
 #from app import DatabaseSession, health, HealthCheck
 import os.path
-import psycopg2
+#import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
 
 
 app = Flask(__name__)
-#@app.route('/health', methods = ["GET"])
-#def index_test_bd():
+
+ 
+@app.route('/billing-api/health')
+def health_db_status():
     #if mycursor == connection.cursor():
 
     # with connection.cursor() as mycursor:
@@ -16,38 +18,6 @@ app = Flask(__name__)
     #             stmt = "select 1"
     #             mycursor.execute(stmt)
     #             connection.commit()
-       #return jsonify({"OK"}), 200
-       
-"""
-health = HealthCheck(app, "/health")
-
-def health_db_status():
-    is_database_working = True
-    output = 'OK'
-    #return jsonify({"OK"}), 200
-
-    try:
-        session = DatabaseSession.get_database_session()
-        #db.session.execute('select 1')
-        session.execute('select 1')
-    except Exception as e:
-        output = str(e)
-        is_database_working = False
-    return is_database_working, output
-    #return jsonify({"Internal Server Error"}), 500
-
-health.add_check(health_db_status)
-
-"""
-#from app import db
-#conn = psycopg2.connect("dbname=billdb user=billing")
- 
-@app.route('/billing-api/health')
-def health_db_status():
-    # #db.engine.execute('SELECT 1')
-    # cur = conn.cursor()
-    # cur.execute('SELECT 1')
-    # cur.close()
     return jsonify({"OK"}), 200
 
 
