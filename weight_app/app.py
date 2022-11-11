@@ -10,6 +10,8 @@ import sys
 
 
 app = Flask(__name__)
+
+# Just a little alteraiton of this to the main db on the server
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 # app.config['MYSQL_PASSWORD'] = 'password'
@@ -18,7 +20,7 @@ app.config['MYSQL_DB'] = 'weight_app'
 mysql = MySQL(app)
 
 
-@app.route("/weight", methods=["POST", "GET"])
+@app.route("/weight", methods=["POST"])
 def get_weight():
     data = []
     bruto = None
@@ -49,13 +51,14 @@ def get_weight():
             resp = {"id": record_id, "truck": truck, "bruto": bruto}
 
         elif direction == "OUT":
+            record_id = cursor.lastrowid
             neto = weight
             resp = {"id": record_id, "truck": truck, "neto": neto}
 
          # Data structure of JSON format
         # Converts your data strcuture into JSON format
         reponse = jsonify(resp)
-        reponse.status_code = 202  # Provides a response status code of 202 which is "Accepted"
+        reponse.status_code = 200  # Provides a response status code of 202 which is "Accepted"
         return reponse  # Returns the HT
 
     # THE CODE BELOW HAS BEEN IMPLEMENTED BY NOBEL PERHAPS EVEN BETTER THERE SO USE THAT VERSION
@@ -90,24 +93,21 @@ def get_weight():
         # return "<h1>weight<h1>"
     return 404
 
-
+# This function saves the container records in the DB
 def save_container_record(c_id, c_weight, c_unit):
     try:
 
         print(c_id, c_unit, c_weight)
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        # qry = ("INPUT INTO containers_registered(container_id, weight, unit) VALUES (%s, %s, %s,)", c_id, c_weight, c_unit)
-        qry = ('INSERT INTO tbl_container (container_id, weight, unit) VALUES (%s, %s, %s)',
-               (c_id, c_weight, c_unit))
 
-        cursor.execute('INSERT INTO tbl_container (container_id, weight, unit) VALUES (%s, %s, %s)',
-               (c_id, c_weight, c_unit))
+        cursor.execute(
+            'INSERT INTO containers_registered (container_id, weight, unit) VALUES (%s, %s, %s)', (c_id, c_weight, c_unit))
         mysql.connection.commit()
-        return qry
     except Exception as e:
         print(e)
 
 
+# Reads line by lines the container records to be saved
 def read_file_save(a, ext):
     sum = 0
     unit = None
@@ -117,7 +117,7 @@ def read_file_save(a, ext):
         # When unit is in kg
         try:
             for i in a:
-                c_weight = int(i.get('kg'))
+                c_weight = int(i.get('kg')) if i.get('kg') != None else None
                 c_unit = "kg"
                 c_id = i['id']
                 save_container_record(c_id, c_weight, c_unit)
@@ -127,7 +127,7 @@ def read_file_save(a, ext):
         except Exception as e:
             print(e)
             for i in a:
-                c_weight = int(i.get('lbs'))
+                c_weight = int(i.get('lbs')) if i.get('lbs') != None else None
                 c_unit = "lbs"
                 c_id = i['id']
                 sum += int(i['lbs'])
@@ -137,8 +137,9 @@ def read_file_save(a, ext):
     # Reading json file
     elif ext == "json":
         for i in a:
-            c_weight = int(i.get('weight'))
+         
             c_unit = i["unit"]
+            c_weight = int(i.get('weight')) if i.get('weight') != None else None
             c_id = i['id']
             save_container_record(c_id, c_weight, c_unit)
             sum += int(i['weight'])
@@ -155,7 +156,7 @@ def get_batch_weight(file_name):
     data = None
 
     try:  # Trying to read the file
-        with open(f"./Samples/{file_name}", 'r') as file:
+        with open(f"./in/{file_name}", 'r') as file:
             if extension == "csv":
                 data = [{k: v for k, v in reader.items()}
                         for reader in csv.DictReader(file, skipinitialspace=True)]
@@ -166,7 +167,9 @@ def get_batch_weight(file_name):
         # Getting sum of the sum of weight from the containers read from the file.
         sum, unit = read_file_save(data, extension)
 
-        return jsonify({"neto": sum, "unit": unit})
+        response= jsonify(success=True)
+        response.status_code=200
+        return response
     # Throwing an exception because file read failed...
     except IOError as e:
         print(e)
@@ -174,6 +177,18 @@ def get_batch_weight(file_name):
             "File not found, better check the extention or filename")
         resp.status_code = 404
         return resp
+
+
+@app.route("/unknown")
+def get_unknown():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    qry = ('SELECT * FROM containers_registered where weight is null')
+
+    cursor.execute(qry)
+    data = cursor.fetchall()
+    response = jsonify(data)
+    response.status_code = 200
+    return response
 
 
 if __name__ == "__main__":
