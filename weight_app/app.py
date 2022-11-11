@@ -1,13 +1,13 @@
 # IMPORTS
-from flask import Flask, request, jsonify, session
-from datetime import datetime
-from flask_mysqldb import MySQL
-import MySQLdb.cursors
 import csv
 import json
-from read_file import *
 import sys
+from datetime import datetime
 
+import MySQLdb.cursors
+from calculateNeto import sum_container_weights
+from flask import Flask, jsonify, request, session
+from flask_mysqldb import MySQL
 
 app = Flask(__name__)
 
@@ -29,12 +29,12 @@ def get_weight():
     if request.method == "POST":
         json_data = request.get_json()
         direction = json_data["direction"]
-        truck = json_data["license"]
+        truck = json_data["truck"]
         if len(truck) == 0:
             truck = "na"
         containers = json_data["containers"]
         weight = json_data["weight"]
-
+        force = json_data["force"]
         produce = json_data["produce"]
 
         # Date and time of saving the weight data
@@ -43,6 +43,98 @@ def get_weight():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
         if direction == "IN":
+            #Check previous session of the truck
+            qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
+            cursor.execute(qry)
+            resp = cursor.fetchone()
+            if resp["direction"]=="IN" and not force:
+                resp = jsonify({"success": False, "message": "IN-IN error"})
+                resp.status_code=404
+                return resp  
+
+            elif resp["direction"]=="IN" and force:
+                # DIRECTION ( <in> & force=True)  after <in> ::: --> Saves the data 
+                cursor.execute("UPDATE transactions SET produce=%s, containers=%s,  bruto=%s,  datetime=%s WHERE id=%s ",(produce,containers,weight,date, resp["id"]))
+                mysql.connection.commit()
+                record_id = resp["id"]
+                bruto = weight
+
+                response = jsonify({"id": record_id, "truck": truck,  "bruto": bruto})
+                response.status_code=200
+                return response
+
+
+            else:
+                cursor.execute('INSERT INTO transactions  (direction, truck, containers, bruto, truckTara, produce, datetime, neto) VALUES(%s, %s, %s, %s, %s,%s,%s,%s)',
+                           (direction, truck, containers, weight, neto, produce, date, neto))
+                record_id = cursor.lastrowid
+                mysql.connection.commit()
+                bruto = weight
+                resp = {"id": record_id, "truck": truck, "bruto": bruto}
+
+
+
+        # DIRECTION <out>
+        elif direction == "OUT":
+            # select * from getLastRecord ORDER BY id DESC LIMIT 1;
+            qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
+            cursor.execute(qry)
+            resp = cursor.fetchone()
+
+            # DIRECTION <out> FOLLOWED BY None:  Error
+            if resp is None:
+                resp = jsonify({"success": False, "message": "OUT-NONE error"})
+                resp.status_code=404
+                return resp
+
+            # DIRECTION <out> FOLLOWED BY EITHER (<out> & force=True) OR <in>
+            elif (resp["direction"] == "OUT" and force) or resp["direction"]=="IN":
+                #Converting the ids of the containers into tuple with distinct elements hence the set
+                c_ids = tuple(x for x in resp['containers'].split(','))
+
+                # UPDATE TRUNSACTION DATA
+
+                qry = f"SELECT * FROM containers_registered  WHERE container_id IN {c_ids}"
+                cursor.execute(qry)
+                containers = cursor.fetchall()
+                neto = sum_container_weights(containers)
+
+                update_query = f"UPDATE transactions SET neto={neto}, truckTara={weight} WHERE id={resp.get('id')}"
+                cursor.execute(update_query)
+                mysql.connection.commit()
+                record_id = resp["id"]
+                bruto = resp["bruto"]
+
+                response = jsonify({"id": record_id, "truck": truck, 
+                    "bruto": bruto, "truckTara": weight, "neto": neto if neto != 0 else "na"})
+                response.status_code=200
+                return response
+            
+
+            # DIRECTION <out> FOLLOWED BY ( <out> & force=false )  --->  This generates and error
+            elif resp["direction"] == "OUT" and not force:
+                resp = jsonify({"success": False, "message": "OUT-OUT error"})
+                resp.status_code=404
+                return resp
+
+            else:
+                resp= jsonify({"success": "False", "message": "Contact your administrator on this"})
+                resp.status_code=500
+                return resp
+
+        elif direction == "NONE":
+            # FETCHING PREVIOUS DATA OF THE truck and CHECKING DIRECTION
+            qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
+            cursor.execute(qry)
+            resp = cursor.fetchone()
+
+            # DIRECTION <none> AFTER PREVIOUS DIRECTION <in>    ---> Error
+            if resp["direction"]=="IN":
+                resp = jsonify({"success": False, "message": "IN-NONE error"})
+                resp.status_code=404
+                return resp
+            
+            # DIRECTION <none> AFTER ANY OTHER DIRECTION ---> Saves data in database
             cursor.execute('INSERT INTO transactions  (direction, truck, containers, bruto, truckTara, produce, datetime, neto) VALUES(%s, %s, %s, %s, %s,%s,%s,%s)',
                            (direction, truck, containers, weight, neto, produce, date, neto))
             record_id = cursor.lastrowid
@@ -50,15 +142,9 @@ def get_weight():
             bruto = weight
             resp = {"id": record_id, "truck": truck, "bruto": bruto}
 
-        elif direction == "OUT":
-            cursor.execute('SELECT * FROM transactions WHERE truck=%s', truck)
-            mysql.connection.commit()
-            record_id = cursor.lastrowid
-            neto = weight
-            resp = {"id": record_id, "truck": truck, "neto": neto}
+            return resp
 
-        elif direction == "NONE":
-            return ""
+
 
          # Data structure of JSON format
         # Converts your data strcuture into JSON format
@@ -110,7 +196,6 @@ def save_container_record(c_id, c_weight, c_unit):
         mysql.connection.commit()
     except Exception as e:
         print(e)
-
 
 # Reads line by lines the container records to be saved
 def read_file_save(a, ext):
