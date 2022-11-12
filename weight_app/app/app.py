@@ -385,9 +385,19 @@ def get_health():
     #       result += f"\n service {service} : ... failed - {status_code} \n"
     #   else:
     #       result += f"\n Service {service} : {status_code}... ok \n"
-    return jsonify({
-        "message": "Weight server health check successful"
-    })
-    
+    # return jsonify({
+    #     "message": "Weight server health check successful"
+    # })
+    cur=mysql.connection.cursor()    
+    results=cur.execute("SELECT 1 FROM transactions")
+    results2=cur.execute("SELECT 1 FROM containers_registered")
+    if results and results2:    
+        res=jsonify({"message": "Weight server health check successful"})
+        res.status_code=200
+        return res
+    res=jsonify({"warning":"server down!!!"})
+    res.status_code=404
+    return res
+
 if __name__=="__main__":
     app.run(host='0.0.0.0')
