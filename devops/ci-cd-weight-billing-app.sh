@@ -74,7 +74,7 @@ echo "Done pulling green team weight and billing app repo"
 # 2. Deploy to test environment
 deploy_to_test
 
-# 3. Run test function
+# 3. Run test function on test environment
 run_test_script
 
 
