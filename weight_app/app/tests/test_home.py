@@ -1,3 +1,4 @@
+from app import app
 def test_home_page():
     flask_app=create_app('flask_test.cfg')
 
