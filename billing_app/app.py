@@ -124,12 +124,11 @@ def rates():
         # name = body['name']
         file = body['file']
         filepath = f'./in/{file}'
-        print(os.path.isfile(f'./in/{file}'))
         # check if file exist
-        if os.path.isfile(f'./in/{file}'):
+        if os.path.isfile(filepath):
             # df = pd.read_excel(file)
             data = []
-            df = load_workbook(file)
+            df = load_workbook(filepath)
             sheet = df.active
             row_count = sheet.max_row
             for rows in sheet.iter_rows():
@@ -140,10 +139,19 @@ def rates():
                 
             # establish db connection
             with connection.cursor() as mycursor:
-                mycursor = connection.cursor(dictionary=True)
-                stmt = "INSERT INTO Rates (`product_id`, `rate`, `scope`) VALUES (%s, %s, %s)"
-                mycursor.executemany(stmt, data[1:])
-                connection.commit()
+                # mycursor = connection.cursor(dictionary=True)
+                for row in data[1:]:
+                    mycursor.execute("SELECT * FROM Rates WHERE product_id = %s AND scope = %s", (row[0], row[2], ))
+                    result = mycursor.fetchall()
+                    if len(result) < 1:
+                        mycursor.execute("INSERT INTO Rates (`product_id`, `rate`, `scope`) VALUES (%s, %s, %s)", row)
+                    else:
+                        mycursor.execute("""
+                        UPDATE Rates 
+                        SET rate = %s 
+                        WHERE product_id = %s AND scope = %s
+                        """, (row[1], f'{row[0]}', f'{row[2]}'))
+                    connection.commit()
                 return jsonify({"msg": "Rates uploaded successfully!"}), 201
         else:
             return jsonify({"msg": "Unsupported file format!!!"}), 204
@@ -171,19 +179,23 @@ def rates():
 
 @app.route('/bill/<id>')
 def getbill(id):
-    t1 = request.args.get('t1')
-    t2 = request.args.get('t2')
+    t1 = request.args.get('t1') if request.args.get('t1') else datetime.datetime(2022,1,1).strftime('%Y%m%d%H%M%S')
+    t2 = request.args.get('t2') if request.args.get('t2') else datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    param={"from": t1,"to": t2}
+
+    sessionuri = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/session/{id}").json()
+    # weighturi = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/weight/{id}", params=param).json()
     
     # expected return
     return jsonify({
-        "id": 12,
+        "id": sessionuri[0]['id'],
         "name": "<str>",
-        "from": "<str>",
-        "to": "<str>",
-        "truckCount": "<int>",
-        "sessionCount": "<int>",
+        "from": sessionuri[0]['truck'],
+        "to": sessionuri[0]['truck'],
+        "truckCount": sessionuri[0]['truck'],
+        "sessionCount": sessionuri[0]['truck'],
         "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
-        "total": "<int>" 
+        "total": sessionuri[0]['neto'] 
     })
 
 
