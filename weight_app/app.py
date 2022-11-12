@@ -42,17 +42,17 @@ def get_weight():
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-        if direction == "IN":
+        if direction == "in":
             #Check previous session of the truck
             qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
             cursor.execute(qry)
             resp = cursor.fetchone()
-            if resp["direction"]=="IN" and not force:
+            if resp["direction"]=="in" and not force:
                 resp = jsonify({"success": False, "message": "IN-IN error"})
                 resp.status_code=404
                 return resp  
 
-            elif resp["direction"]=="IN" and force:
+            elif resp["direction"]=="in" and force:
                 # DIRECTION ( <in> & force=True)  after <in> ::: --> Saves the data 
                 cursor.execute("UPDATE transactions SET produce=%s, containers=%s,  bruto=%s,  datetime=%s WHERE id=%s ",(produce,containers,weight,date, resp["id"]))
                 mysql.connection.commit()
@@ -75,7 +75,7 @@ def get_weight():
 
 
         # DIRECTION <out>
-        elif direction == "OUT":
+        elif direction == "out":
             # select * from getLastRecord ORDER BY id DESC LIMIT 1;
             qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
             cursor.execute(qry)
@@ -88,7 +88,7 @@ def get_weight():
                 return resp
 
             # DIRECTION <out> FOLLOWED BY EITHER (<out> & force=True) OR <in>
-            elif (resp["direction"] == "OUT" and force) or resp["direction"]=="IN":
+            elif (resp["direction"] == "out" and force) or resp["direction"]=="in":
                 #Converting the ids of the containers into tuple with distinct elements hence the set
                 c_ids = tuple(x for x in resp['containers'].split(','))
 
@@ -112,7 +112,7 @@ def get_weight():
             
 
             # DIRECTION <out> FOLLOWED BY ( <out> & force=false )  --->  This generates and error
-            elif resp["direction"] == "OUT" and not force:
+            elif resp["direction"] == "out" and not force:
                 resp = jsonify({"success": False, "message": "OUT-OUT error"})
                 resp.status_code=404
                 return resp
@@ -122,14 +122,14 @@ def get_weight():
                 resp.status_code=500
                 return resp
 
-        elif direction == "NONE":
+        elif direction == "none":
             # FETCHING PREVIOUS DATA OF THE truck and CHECKING DIRECTION
             qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
             cursor.execute(qry)
             resp = cursor.fetchone()
 
             # DIRECTION <none> AFTER PREVIOUS DIRECTION <in>    ---> Error
-            if resp["direction"]=="IN":
+            if resp["direction"]=="in":
                 resp = jsonify({"success": False, "message": "IN-NONE error"})
                 resp.status_code=404
                 return resp

@@ -2,8 +2,6 @@ from flask_mysqldb import MySQL
 import MySQLdb.cursors
 
 
-
-
 def sum_container_weights(data):
     sum = 0
     try:
