@@ -9,5 +9,6 @@ def sum_container_weights(data):
             sum+=record['weight']
         return sum
     except Exception as e:
-        return "na" 
+        print(e)
+        return 0 
     

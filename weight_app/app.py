@@ -42,12 +42,24 @@ def get_weight():
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
+
+        # DIRECTION <in>
         if direction == "in":
             #Check previous session of the truck
             qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
             cursor.execute(qry)
             resp = cursor.fetchone()
-            if resp["direction"]=="in" and not force:
+
+            # If truck has no previous record: -> Save the new data in the data base..
+            if resp is None or resp["direction"]=="out" or resp["direction"]=="none":
+                cursor.execute('INSERT INTO transactions  (direction, truck, containers, bruto, truckTara, produce, datetime, neto) VALUES(%s, %s, %s, %s, %s,%s,%s,%s)',
+                           (direction, truck, containers, weight, neto, produce, date, neto))
+                record_id = cursor.lastrowid
+                mysql.connection.commit()
+                bruto = weight
+                resp = {"id": record_id, "truck": truck, "bruto": bruto}
+
+            elif resp["direction"]=="in" and not force:
                 resp = jsonify({"success": False, "message": "IN-IN error"})
                 resp.status_code=404
                 return resp  
@@ -62,15 +74,6 @@ def get_weight():
                 response = jsonify({"id": record_id, "truck": truck,  "bruto": bruto})
                 response.status_code=200
                 return response
-
-
-            else:
-                cursor.execute('INSERT INTO transactions  (direction, truck, containers, bruto, truckTara, produce, datetime, neto) VALUES(%s, %s, %s, %s, %s,%s,%s,%s)',
-                           (direction, truck, containers, weight, neto, produce, date, neto))
-                record_id = cursor.lastrowid
-                mysql.connection.commit()
-                bruto = weight
-                resp = {"id": record_id, "truck": truck, "bruto": bruto}
 
 
 
@@ -122,6 +125,7 @@ def get_weight():
                 resp.status_code=500
                 return resp
 
+        # DIRECTION <none>
         elif direction == "none":
             # FETCHING PREVIOUS DATA OF THE truck and CHECKING DIRECTION
             qry = f'SELECT * FROM transactions WHERE truck = "{truck}" order by id DESC LIMIT 1'
@@ -129,7 +133,7 @@ def get_weight():
             resp = cursor.fetchone()
 
             # DIRECTION <none> AFTER PREVIOUS DIRECTION <in>    ---> Error
-            if resp["direction"]=="in":
+            if  resp is not None and resp["direction"]=="in":
                 resp = jsonify({"success": False, "message": "IN-NONE error"})
                 resp.status_code=404
                 return resp
