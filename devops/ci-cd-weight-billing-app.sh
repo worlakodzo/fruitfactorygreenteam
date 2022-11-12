@@ -13,7 +13,7 @@ APP_TOKEN="ucairqdcrdnvsfbl"
 
 function backup(){
     backup_date="$(date +%Y%m%d%H%M%S)"
-    cd ../billing_app 
+    cd ../billing_app
     docker build -t billing-app:00-SNAPSHOT-$backup_date .
     cd ../weight_app
     docker build -t weight-app:00-SNAPSHOT-$backup_date .
@@ -22,42 +22,44 @@ function backup(){
 function deploy_to_test(){
     echo "Building Test Application From Docker Compose File"
     cd ../billing_app
-    docker-compose build -f docker-compose-test.yml
-    docker-compose up -d -f docker-compose-test.yml
+    docker-compose -f docker-compose-test.yml build
+    docker-compose -f docker-compose-test.yml up -d
     cd ../weight_app
-    docker-compose build -f docker-compose-test.yml
-    docker-compose up -d -f docker-compose-test.yml
+    docker-compose -f docker-compose-test.yml build
+    docker-compose -f docker-compose-test.yml up -d
 }
 
 
 function deploy_to_production(){
     echo "Building Production Application From Docker Compose File"
     cd ../billing_app
-    docker-compose build -f docker-compose-production.yml
-    docker-compose up -d -f docker-compose-production.yml
+    docker-compose -f docker-compose-production.yml build
+    docker-compose -f docker-compose-production.yml up -d
     cd ../weight_app
-    docker-compose build -f docker-compose-production.yml
-    docker-compose up -d -f docker-compose-production.yml
+    docker-compose -f docker-compose-production.yml build
+    docker-compose -f docker-compose-production.yml up -d
 }
 
 function kill_test_env(){
     echo "Taking Down Test Application From Docker Compose File"
     cd ../billing_app
-    docker-compose down -d -f docker-compose-production.yml
+    docker-compose -f docker-compose-production.yml down
     cd ../weight_app
-    docker-compose down -d -f docker-compose-production.yml
+    docker-compose -f docker-compose-production.yml down
 }
 
 function run_test_script(){
     echo "#######Testing Started...########"
     # python3 -m pytest -v
+
     echo "#######Testing Completed...########"
     
     if [[ $? == 0 ]]; then
-        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $DEPLOYMENT_SUCCESS -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
+        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $TEST_SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes
+        kill_test_env
         deploy_to_production
-
-    else 
+        sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $DEPLOYMENT_SUCCESS -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes
+    else
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $FAILED_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
     fi
 }
@@ -73,6 +75,5 @@ echo "Done pulling green team weight and billing app repo"
 
 deploy_to_test
 run_test_script
-kill_test_env
-deploy_to_production
+
 
