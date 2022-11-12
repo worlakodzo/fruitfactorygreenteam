@@ -54,28 +54,28 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
-        <a class="nav-link " href="/">
+        <a class="nav-link {% if is_dashboard %}-{%else%}collapsed{%endif%}" href="/">
           <i class="bi bi-grid"></i>
           <span>Dashboard</span>
         </a>
       </li><!-- End Dashboard Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="/provider-list">
+        <a class="nav-link {% if is_provider %}-{%else%}collapsed{%endif%}" href="/provider-list">
           <i class="bi bi-people-fill"></i>
           <span>Providers</span>
         </a>
       </li><!-- End Profile Page Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="/truck-list">
+        <a class="nav-link {% if is_truck %}-{%else%}collapsed{%endif%}" href="/truck-list">
           <i class="bi bi-truck"></i>
           <span>Trucks</span>
         </a>
       </li><!-- End Profile Page Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="/rate-list">
+        <a class="nav-link {% if is_rate %}-{%else%}collapsed{%endif%}" href="/rate-list">
           <i class="bi bi-currency-dollar"></i>
           <span>Rates</span>
         </a>

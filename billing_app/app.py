@@ -1,35 +1,12 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
-#from db import connection
+from db import connection
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
-# import requests
+import requests
 
 
 app = Flask(__name__)
-
-# Remove this dummy data
-provider_list = [
-    {
-        "id": 1,
-        "name": "worlako",
-
-    },            {
-        "id": 2,
-        "name": "Seth",
-
-    },            {
-        "id": 3,
-        "name": "Kofi",
-
-    },            {
-        "id": 4,
-        "name": "Makafua",
-
-    },
-]
-
-
 
  
 @app.route('/billing-api/health')
@@ -58,6 +35,7 @@ def billing_index():
 
         return render_template(
             'index.html',
+            is_dashboard = True,
             provider_count  = provider_count,
             truck_count  = truck_count,
             rate_count  = rate_count
@@ -169,6 +147,8 @@ def rates():
         else:
             return jsonify({"msg": "Unsupported file format!!!"}), 204
     else:
+        # Return list of rate to frontend
+
         with connection.cursor() as mycursor:
             # mycursor = connection.cursor(dictionary=True)
             stmt = "SELECT * FROM Rates"
@@ -206,14 +186,16 @@ def getbill(id):
     })
 
 
+
 #Endpoint for post truck    
-@app.route("/truck",methods=['POST'])
+@app.route("/truck",methods=["GET",'POST'])
 def Truck_Post():
         
     if request.method == 'POST':
         body = request.get_json()
         truck_id = body['id']
         provider_id = body['provider_id']
+
         if truck_id != '' and provider_id != '' :
             
             
@@ -233,7 +215,10 @@ def Truck_Post():
 
         else:
             return jsonify({"msg": "Enter Truck ID and Provider ID "}), 204
-    else:
+
+    elif request.method == "GET":
+
+
         with connection.cursor() as mycursor:
              mycursor = connection.cursor(dictionary=True)
             # stmt = "SELECT * FROM Truck"
@@ -264,6 +249,12 @@ def Truck_Put():
 
 @app.route('/truck/<id>')
 def get_truckid(id):
+
+    for truck in truck_list:
+        if str(truck["id"]) == str(id):
+            return jsonify(truck)
+
+
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
     param={'id':id,"from":t1,"to":t2}
@@ -280,7 +271,7 @@ def get_truckid(id):
 def get_provider_list():
     try:
 
-        return render_template('provider-list.html', providers = provider_list)
+        return render_template('provider-list.html', is_provider=True)
     except Exception as err:
         abort(500)
 
@@ -289,8 +280,12 @@ def get_provider_list():
 def get_truck_list():
     try:
 
-        
-        return render_template('index.html')
+        # Add list of providers
+
+        return render_template('truck-list.html',
+        is_truck=True,
+        providers = []
+        )
     except Exception as err:
         abort(500)
 
@@ -300,7 +295,7 @@ def get_rate_list():
     try:
 
         
-        return render_template('index.html')
+        return render_template('rate-list.html', is_rate=True)
     except Exception as err:
         abort(500)
 
