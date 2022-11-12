@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+
+  db:
+    image: mysql:5.7
+    restart: always
+    networks:
+      - weightbackend
+    environment:
+      MYSQL_DATABASE: 'weight'
+      MYSQL_USER: 'weight'
+      MYSQL_PASSWORD: 'weight1password'
+      MYSQL_ROOT_PASSWORD: 'root'
+
+    container_name: weight-db
+    volumes:
+      - weight-db:/var/lib/mysql
+      - ./dump-db:/dump-db
+      - /in:/app/in
+    
+
+  weightapi:
+      build: ./app
+      restart: on-failure
+      networks:
+        - weightbackend
+      ports:
+        - "8081:5000"
+
+      environment:
+        MYSQL_DATABASE: 'weight'
+        MYSQL_USER: 'weight'
+        MYSQL_PASSWORD: 'weight1password'
+        MYSQL_ROOT_PASSWORD: 'root1password'
+        MYSQL_PORT: '3306'
+        MYSQL_HOST: 'db'
+      container_name: weight-api
+      
+      volumes:
+        - /in:/app/in
+
+
+      depends_on:
+        - db
+      
+      
+
+volumes:
+  weight-db:
+
+
+networks:
+  weightbackend: {}
+
+
