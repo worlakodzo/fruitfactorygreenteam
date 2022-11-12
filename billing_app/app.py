@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request, abort
-#from app import DatabaseSession, health, HealthCheck
+from db import connection
 import os.path
-#import psycopg2
 from openpyxl import Workbook, load_workbook
 import datetime
+import requests
+from db import connection
+import json
 
 
 app = Flask(__name__)
@@ -11,15 +13,19 @@ app = Flask(__name__)
  
 @app.route('/billing-api/health')
 def health_db_status():
-    #if mycursor == connection.cursor():
+    try:
+        
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            stmt = "select 1"
+            mycursor.execute(stmt)
+            stmt_result = mycursor.fetchone()
+            return jsonify({"status": "OK"}), 200
 
-    # with connection.cursor() as mycursor:
-    #             mycursor = connection.cursor(dictionary=True)
-    #             stmt = "select 1"
-    #             mycursor.execute(stmt)
-    #             connection.commit()
-    return jsonify({"status": "OK"}), 200
-
+    except Exception as e:
+        
+        return jsonify({"status":"failure"}), 500
+    
 
 @app.route('/', methods = ["GET", "POST", "PUT"])
 def billing_index():
@@ -36,20 +42,23 @@ def billing_index():
     except Exception as err:
         abort(500)
 
-from db import connection
-@app.route('/provider', methods=['GET', 'POST', 'PUT'])
+
+
+@app.route('/provider', methods=['POST'])
+
 def provider():
     if request.method == 'POST':
         body = request.get_json()
-        id = body['id']
-        name = body['name']
-        if id != '' and name != '':
-            with connection.cursor() as provider:
-                provider = connection.cursor(dictionary=True)
-                do = "INSERT INTO Provider (`name`) VALUES (%s)"
-                provider.execute(do)
+        name1 = body['name']
+        if name1 != None:
+            with connection.cursor() as mycursor:
+                mycursor = connection.cursor(dictionary=True)
+                stmt,val = "INSERT INTO Provider (name) VALUES (%s)",[(name1)]
+                print (name1)
+                print(stmt)
+                mycursor.execute(stmt, val)
                 connection.commit()
-                return jsonify(id), 201
+                return jsonify({"record saves provider id: ": mycursor.lastrowid}), 201
         else:
             return jsonify({"msg": " Unsuccessfull!!!"}), 204
             
@@ -62,21 +71,23 @@ def provider():
 
 
 
-@app.route('/provider/<id>', methods=['GET', 'POST', 'PUT'])
+
+@app.route('/provider/<id>', methods=['PUT'])
+
 def update_provider_name(id):
     if request.method == 'PUT':
-        body = request.args.get()
+        id=request.args.get('id')
+        body = request.get_json()
         name = body['name']
         if name != '':
             with connection.cursor() as provider:
                 provider = connection.cursor(dictionary=True)
-                do = "INSERT INTO Provider (`name`) VALUES (%s)"
-                provider.execute(do)
+                do,val = "UPDATE Provider SET name =%s where id=%s",(name,id)
+                provider.execute(do,val)
                 connection.commit()
-                return jsonify(name), 201
+                return jsonify({"message":"update succes:  "}), 201
         else:
-            return jsonify({"msg": " Unsuccessfull!!!"}), 204
-            
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204            
 
 
 @app.route('/weight', methods = ["POST"])
@@ -105,9 +116,10 @@ def rates():
         body = request.get_json()
         # name = body['name']
         file = body['file']
-        print(os.path.isfile(file))
+        filepath = f'./in/{file}'
+        print(os.path.isfile(f'./in/{file}'))
         # check if file exist
-        if os.path.isfile(file):
+        if os.path.isfile(f'./in/{file}'):
             # df = pd.read_excel(file)
             data = []
             df = load_workbook(file)
@@ -152,67 +164,84 @@ def rates():
 def getbill(id):
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
-
+    
     # expected return
-    return jsonify({"id": 12,"name": "<str>","from": "<str>","to": "<str>","truckCount": "<int>","sessionCount": "<int>","products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],"total": "<int>" })
+    return jsonify({
+        "id": 12,
+        "name": "<str>",
+        "from": "<str>",
+        "to": "<str>",
+        "truckCount": "<int>",
+        "sessionCount": "<int>",
+        "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
+        "total": "<int>" 
+    })
 
 
 #Endpoint for post truck    
-@app.route("/Truck",methods=['POST'])
+@app.route('/truck', methods=['POST'])
 def Truck_Post():
-        
     if request.method == 'POST':
         body = request.get_json()
         truck_id = body['id']
         provider_id = body['provider_id']
-        if truck_id != '' and provider_id != '' :
-            
-            
-             with connection.cursor() as mycursor:
-                mycursor = connection.cursor(dictionary=True)
-                stmt, val = "INSERT INTO Trucks (id, provider_id) VALUES (%s, (select id from Provider where id=%s))", (truck_id, provider_id)
-               
-               #trap Database Error
-                try:            
-                    mycursor.execute(stmt, val)
-                    connection.commit()
-                    return jsonify({"message": "Truck data saved successfully!"}), 201
-                except:
-                    return jsonify({"msg": "error posting "}), 204
-                    
-             
-
+        if truck_id != '' and provider_id != None :
+                try: 
+                    with connection.cursor() as mycursor:
+                        mycursor = connection.cursor(dictionary=True)
+                        stmt, val = "INSERT INTO Trucks (id, provider_id) VALUES (%s, (select id from Provider where id=%s))", (truck_id, provider_id)
+                        mycursor.execute(stmt, val)
+                        connection.commit()
+                        return jsonify({"message": "data saved successfully!"}), 201
+                except Exception as e:
+                    return jsonify({"message": "failure posting "}), 400
         else:
-            return jsonify({"msg": "Enter Truck ID and Provider ID "}), 204
+            return jsonify({"message": "provide Truck ID and Provider ID "}), 400
     else:
-        with connection.cursor() as mycursor:
-             mycursor = connection.cursor(dictionary=True)
-            # stmt = "SELECT * FROM Truck"
-            # mycursor.execute(stmt)
-            # stmt_result = mycursor.fetchall()
-            # return jsonify(stmt_result)
+        return jsonify({"message": "method not allowed"}), 405
 
 
-@app.route("/Truck/",methods=['PUT'])
-def Truck_Put():
+@app.route('/truck/<id>', methods=['PUT'])
+def Truck_Put(id):
     
     if request.method == 'PUT':
         body = request.get_json()
-        truck_id = body['id']
+        truck_id = request.args.get('id')
         provider_id = body['provider_id']
 
-        
-        if truck_id !='' and provider_id !='':    
+        if truck_id !='' and provider_id != None:    
             with connection.cursor() as mycursor:
                 mycursor = connection.cursor(dictionary=True)
                 stmt = "update Trucks set provider_id = %s where id=%s" 
                 val=(provider_id, truck_id)
                 mycursor.execute(stmt,val)
                 connection.commit
-                return jsonify ({"msg": "provider ID updated successfully! "}+truck_id), 201
+                return jsonify ({"message": "provider ID updated successfully! "}), 201
     else:
             return jsonify({"msg": "Truck ID not found in the database "}), 204
 
+@app.route('/truck',methods=['GET'])
+def truck_Get():
+    if request.method == 'GET':
+        reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081')
+        assert reqResp.status_code == 200
+        data=json.loads(reqResp.content)
+        print(data)
+        return jsonify(data), 200
+        
+            # t1 = request.args.get('t1')
+            # t2 = request.args.get('t2')
+            # param={'id':id,"from":t1,"to":t2}
+            # reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/')
+            # assert reqResp.status_code == 200
+           
+           
+        # except Exception as e:
+        #     #data={ "id": "144-12-510", "tara": "120","sessions": ["sid112220","sid22233","sid10002"]}
+
+        #     return "error inside expection",400
+    else:
+        return jsonify("message:error"),204
 
 @app.errorhandler(500)
 def internal_server_error(error):
@@ -224,4 +253,4 @@ def internal_server_error(error):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
