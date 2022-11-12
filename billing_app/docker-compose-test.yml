@@ -2,11 +2,11 @@ version: '3'
 
 services:
 
-  billdbtest:
+  billdb:
     image: mysql:5.7
     restart: always
     networks:
-      - backend
+      - billingbackendtest
     environment:
       MYSQL_DATABASE: 'billdb'
       MYSQL_USER: 'billing'
@@ -23,9 +23,9 @@ services:
       build: .
       restart: on-failure
       networks:
-        - backend
+        - billingbackendtest
       ports:
-        - "8082:5000"
+        - "8085:5000"
 
       environment:
         MYSQL_DATABASE: 'billdb'
@@ -45,6 +45,6 @@ volumes:
 
 
 networks:
-  backend: {}
+  billingbackendtest: {}
 
 
