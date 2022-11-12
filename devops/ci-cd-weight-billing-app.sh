@@ -22,22 +22,30 @@ function backup(){
 function deploy_to_test(){
     echo "Building Test Application From Docker Compose File"
     cd ../billing_app
-    docker-compose build
-    docker-compose up -d
+    docker-compose build -f docker-compose-test.yml
+    docker-compose up -d -f docker-compose-test.yml
     cd ../weight_app
-    docker-compose build
-    docker-compose up -d
+    docker-compose build -f docker-compose-test.yml
+    docker-compose up -d -f docker-compose-test.yml
 }
 
 
 function deploy_to_production(){
     echo "Building Production Application From Docker Compose File"
     cd ../billing_app
-    docker-compose build
-    docker-compose up -d
+    docker-compose build -f docker-compose-production.yml
+    docker-compose up -d -f docker-compose-production.yml
     cd ../weight_app
-    docker-compose build
-    docker-compose up -d
+    docker-compose build -f docker-compose-production.yml
+    docker-compose up -d -f docker-compose-production.yml
+}
+
+function kill_test_env(){
+    echo "Taking Down Test Application From Docker Compose File"
+    cd ../billing_app
+    docker-compose down -d -f docker-compose-production.yml
+    cd ../weight_app
+    docker-compose down -d -f docker-compose-production.yml
 }
 
 function run_test_script(){
@@ -48,7 +56,7 @@ function run_test_script(){
     if [[ $? == 0 ]]; then
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $DEPLOYMENT_SUCCESS -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
         deploy_to_production
-        
+
     else 
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $FAILED_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
     fi
@@ -65,4 +73,6 @@ echo "Done pulling green team weight and billing app repo"
 
 deploy_to_test
 run_test_script
+kill_test_env
+deploy_to_production
 
