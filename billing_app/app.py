@@ -1,12 +1,35 @@
-from flask import Flask, jsonify, request, abort
-from db import connection
+from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
+#from db import connection
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
-import requests
+# import requests
 
 
 app = Flask(__name__)
+
+# Remove this dummy data
+provider_list = [
+    {
+        "id": 1,
+        "name": "worlako",
+
+    },            {
+        "id": 2,
+        "name": "Seth",
+
+    },            {
+        "id": 3,
+        "name": "Kofi",
+
+    },            {
+        "id": 4,
+        "name": "Makafua",
+
+    },
+]
+
+
 
  
 @app.route('/billing-api/health')
@@ -26,28 +49,31 @@ def health_db_status():
         return jsonify({"status":"failure"}), 500
     
 
-@app.route('/', methods = ["GET", "POST", "PUT"])
+@app.route('/', methods = ["GET"])
 def billing_index():
-
     try:
+        provider_count = 0
+        truck_count = 0
+        rate_count = 0
 
-        data = {
-            "billing_index" "This is the home page"
-        }
-
-
-        return jsonify(data)
-
+        return render_template(
+            'index.html',
+            provider_count  = provider_count,
+            truck_count  = truck_count,
+            rate_count  = rate_count
+            )
     except Exception as err:
         abort(500)
 
 
-@app.route('/provider', methods=['GET', 'POST', 'PUT'])
+
+@app.route('/provider', methods=['GET', 'POST'])
 def provider():
     if request.method == 'POST':
         body = request.get_json()
-        id = body['id']
         name = body['name']
+        
+        
         if id != '' and name != '':
             with connection.cursor() as provider:
                 provider = connection.cursor(dictionary=True)
@@ -59,18 +85,21 @@ def provider():
             return jsonify({"msg": " Unsuccessfull!!!"}), 204
             
     else:
+
         with connection.cursor() as provider:
             do = "SELECT * FROM Provider"
             provider.execute(do)
             result = provider.fetchall()
+
             return jsonify(result)
 
 
-@app.route('/provider/<id>', methods=['GET', 'POST', 'PUT'])
+@app.route('/provider/<id>', methods=['GET', 'PUT'])
 def update_provider_name(id):
     if request.method == 'PUT':
-        body = request.args.get()
+        body = request.get_json()
         name = body['name']
+
         if name != '':
             with connection.cursor() as provider:
                 provider = connection.cursor(dictionary=True)
@@ -79,7 +108,14 @@ def update_provider_name(id):
                 connection.commit()
                 return jsonify(name), 201
         else:
-            return jsonify({"msg": " Unsuccessfull!!!"}), 204            
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204
+
+
+    if request.method == 'GET':
+
+        # retrieve specific provider here 
+        pass
+
 
 
 @app.route('/weight', methods = ["POST"])
@@ -237,6 +273,41 @@ def get_truckid(id):
     return data
 
 
+
+
+
+@app.route('/provider-list', methods = ["GET"])
+def get_provider_list():
+    try:
+
+        return render_template('provider-list.html', providers = provider_list)
+    except Exception as err:
+        abort(500)
+
+
+@app.route('/truck-list', methods = ["GET"])
+def get_truck_list():
+    try:
+
+        
+        return render_template('index.html')
+    except Exception as err:
+        abort(500)
+
+
+@app.route('/rate-list', methods = ["GET"])
+def get_rate_list():
+    try:
+
+        
+        return render_template('index.html')
+    except Exception as err:
+        abort(500)
+
+
+
+
+
 @app.errorhandler(500)
 def internal_server_error(error):
     return jsonify({
@@ -244,6 +315,8 @@ def internal_server_error(error):
         "error": 500,
         "message": "Internal Server Error"
     })
+
+
 
 
 if __name__ == '__main__':
