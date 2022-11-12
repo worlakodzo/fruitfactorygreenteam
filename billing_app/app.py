@@ -1,9 +1,10 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
-from db import connection
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
 import requests
+from db import connection
+import json
 
 
 app = Flask(__name__)
@@ -11,7 +12,6 @@ app = Flask(__name__)
  
 @app.route('/billing-api/health')
 def health_db_status():
-    
     try:
         
         with connection.cursor() as mycursor:
@@ -44,21 +44,21 @@ def billing_index():
         abort(500)
 
 
-
 @app.route('/provider', methods=['GET', 'POST'])
 def provider():
     if request.method == 'POST':
         body = request.get_json()
-        name = body['name']
-        
-        
-        if id != '' and name != '':
-            with connection.cursor() as provider:
-                provider = connection.cursor(dictionary=True)
-                do = "INSERT INTO Provider (`name`) VALUES (%s)"
-                provider.execute(do)
+        name1 = body['name']
+        if name1 != None:
+            with connection.cursor() as mycursor:
+                mycursor = connection.cursor(dictionary=True)
+                stmt,val = "INSERT INTO Provider (name) VALUES (%s)",[(name1)]
+                print (name1)
+                print(stmt)
+                mycursor.execute(stmt, val)
+
                 connection.commit()
-                return jsonify(id), 201
+                return jsonify({"record saves provider id: ": mycursor.lastrowid}), 201
         else:
             return jsonify({"msg": " Unsuccessfull!!!"}), 204
             
@@ -75,16 +75,17 @@ def provider():
 @app.route('/provider/<id>', methods=['GET', 'PUT'])
 def update_provider_name(id):
     if request.method == 'PUT':
+
         body = request.get_json()
         name = body['name']
 
         if name != '':
             with connection.cursor() as provider:
                 provider = connection.cursor(dictionary=True)
-                do = "INSERT INTO Provider (`name`) VALUES (%s)"
-                provider.execute(do)
+                do,val = "UPDATE Provider SET name =%s where id=%s",(name,id)
+                provider.execute(do,val)
                 connection.commit()
-                return jsonify(name), 201
+                return jsonify({"message":"update succes:  "}), 201
         else:
             return jsonify({"msg": " Unsuccessfull!!!"}), 204
 
@@ -188,9 +189,8 @@ def getbill(id):
 
 
 #Endpoint for post truck    
-@app.route("/truck",methods=["GET",'POST'])
+@app.route('/truck', methods=['POST'])
 def Truck_Post():
-        
     if request.method == 'POST':
         body = request.get_json()
         truck_id = body['id']
@@ -226,34 +226,44 @@ def Truck_Post():
             # stmt_result = mycursor.fetchall()
             # return jsonify(stmt_result)
 
+        if truck_id != '' and provider_id != None :
+                try: 
+                    with connection.cursor() as mycursor:
+                        mycursor = connection.cursor(dictionary=True)
+                        stmt, val = "INSERT INTO Trucks (id, provider_id) VALUES (%s, (select id from Provider where id=%s))", (truck_id, provider_id)
+                        mycursor.execute(stmt, val)
+                        connection.commit()
+                        return jsonify({"message": "data saved successfully!"}), 201
+                except Exception as e:
+                    return jsonify({"message": "failure posting "}), 400
+        else:
+            return jsonify({"message": "provide Truck ID and Provider ID "}), 400
+    else:
+        return jsonify({"message": "method not allowed"}), 405
 
-@app.route("/truck/",methods=['PUT'])
-def Truck_Put():
+
+@app.route('/truck/<id>', methods=['PUT'])
+def Truck_Put(id):
     
     if request.method == 'PUT':
         body = request.get_json()
-        truck_id = body['id']
+        truck_id = request.args.get('id')
         provider_id = body['provider_id']
 
-        
-        if truck_id !='' and provider_id !='':    
+        if truck_id !='' and provider_id != None:    
             with connection.cursor() as mycursor:
                 mycursor = connection.cursor(dictionary=True)
                 stmt = "update Trucks set provider_id = %s where id=%s" 
                 val=(provider_id, truck_id)
                 mycursor.execute(stmt,val)
                 connection.commit
-                return jsonify ({"msg": "provider ID updated successfully! "}+truck_id), 201
+                return jsonify ({"message": "provider ID updated successfully! "}), 201
     else:
             return jsonify({"msg": "Truck ID not found in the database "}), 204
 
+
 @app.route('/truck/<id>')
 def get_truckid(id):
-
-    for truck in truck_list:
-        if str(truck["id"]) == str(id):
-            return jsonify(truck)
-
 
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
@@ -263,6 +273,29 @@ def get_truckid(id):
     data=reqResp.json
     return data
 
+
+@app.route('/truck',methods=['GET'])
+def truck_Get():
+    if request.method == 'GET':
+        reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081')
+        assert reqResp.status_code == 200
+        data=json.loads(reqResp.content)
+        print(data)
+        return jsonify(data), 200
+        
+            # t1 = request.args.get('t1')
+            # t2 = request.args.get('t2')
+            # param={'id':id,"from":t1,"to":t2}
+            # reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/')
+            # assert reqResp.status_code == 200
+           
+           
+        # except Exception as e:
+        #     #data={ "id": "144-12-510", "tara": "120","sessions": ["sid112220","sid22233","sid10002"]}
+
+        #     return "error inside expection",400
+    else:
+        return jsonify("message:error"),204
 
 
 
@@ -315,4 +348,4 @@ def internal_server_error(error):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
