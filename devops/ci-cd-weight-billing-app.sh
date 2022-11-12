@@ -44,6 +44,7 @@ function kill_test_env(){
     docker-compose -f docker-compose-production.yml down
     cd /home/ubuntu/ganshmuelgreenteam/weight_app
     docker-compose -f docker-compose-production.yml down
+    docker rm -f $(docker ps -aq)
 }
 
 function run_test_script(){
