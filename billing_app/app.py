@@ -167,15 +167,16 @@ def getbill(id):
     param={"from": t1,"to": t2}
 
     sessionuri = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/session/{id}").json()
+    # weighturi = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/weight/{id}", params=param).json()
     
     # expected return
     return jsonify({
         "id": sessionuri[0]['id'],
         "name": "<str>",
-        "from": "<str>",
-        "to": "<str>",
-        "truckCount": "<int>",
-        "sessionCount": "<int>",
+        "from": sessionuri[0]['truck'],
+        "to": sessionuri[0]['truck'],
+        "truckCount": sessionuri[0]['truck'],
+        "sessionCount": sessionuri[0]['truck'],
         "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
         "total": sessionuri[0]['neto'] 
     })
