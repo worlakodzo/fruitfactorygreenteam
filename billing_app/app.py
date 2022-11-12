@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, abort
+from db import connection
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
@@ -42,7 +43,9 @@ def billing_index():
         abort(500)
 
 
+
 @app.route('/provider', methods=['POST'])
+
 def provider():
     if request.method == 'POST':
         body = request.get_json()
@@ -68,7 +71,9 @@ def provider():
 
 
 
+
 @app.route('/provider/<id>', methods=['PUT'])
+
 def update_provider_name(id):
     if request.method == 'PUT':
         id=request.args.get('id')
@@ -82,8 +87,7 @@ def update_provider_name(id):
                 connection.commit()
                 return jsonify({"message":"update succes:  "}), 201
         else:
-            return jsonify({"msg": " Unsuccessfull!!!"}), 204
-            
+            return jsonify({"msg": " Unsuccessfull!!!"}), 204            
 
 
 @app.route('/weight', methods = ["POST"])
@@ -112,9 +116,10 @@ def rates():
         body = request.get_json()
         # name = body['name']
         file = body['file']
-        print(os.path.isfile(file))
+        filepath = f'./in/{file}'
+        print(os.path.isfile(f'./in/{file}'))
         # check if file exist
-        if os.path.isfile(file):
+        if os.path.isfile(f'./in/{file}'):
             # df = pd.read_excel(file)
             data = []
             df = load_workbook(file)
@@ -161,7 +166,16 @@ def getbill(id):
     t2 = request.args.get('t2')
     
     # expected return
-    return jsonify({"id": 12,"name": "<str>","from": "<str>","to": "<str>","truckCount": "<int>","sessionCount": "<int>","products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],"total": "<int>" })
+    return jsonify({
+        "id": 12,
+        "name": "<str>",
+        "from": "<str>",
+        "to": "<str>",
+        "truckCount": "<int>",
+        "sessionCount": "<int>",
+        "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
+        "total": "<int>" 
+    })
 
 
 #Endpoint for post truck    
@@ -228,9 +242,6 @@ def truck_Get():
         #     return "error inside expection",400
     else:
         return jsonify("message:error"),204
-
-   
-
 
 @app.errorhandler(500)
 def internal_server_error(error):
