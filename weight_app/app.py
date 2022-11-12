@@ -102,7 +102,8 @@ def get_weight():
                 containers = cursor.fetchall()
                 neto = sum_container_weights(containers)
 
-                update_query = f"UPDATE transactions SET neto={neto}, truckTara={weight} WHERE id={resp.get('id')}"
+
+                update_query = f"UPDATE transactions SET neto={neto}, truckTara={weight}, direction='{direction}' WHERE id={resp.get('id')}"
                 cursor.execute(update_query)
                 mysql.connection.commit()
                 record_id = resp["id"]
