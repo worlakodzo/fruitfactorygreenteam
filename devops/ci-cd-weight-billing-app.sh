@@ -3,7 +3,6 @@ FROM_ADDRESS="greenteamcicd@gmail.com"
 TO_ADDRESS="greenteamcicd@gmail.com"
 
 SUBJECT="CICD DEPLOYMENT"
-
 TEST_SUCCESS_BODY="ATTENTION!!! Test Run passed."
 DEPLOYMENT_SUCCESS="Deployment is successful"
 
@@ -29,7 +28,6 @@ function deploy_to_test(){
     docker-compose -f docker-compose-test.yml up -d
 }
 
-
 function deploy_to_production(){
     echo "Building Production Application From Docker Compose File"
     cd ../billing_app
@@ -53,7 +51,7 @@ function run_test_script(){
     # python3 -m pytest -v
 
     echo "#######Testing Completed...########"
-    
+
     if [[ $? == 0 ]]; then
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $TEST_SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes
         kill_test_env
@@ -73,6 +71,7 @@ echo "Starting pulling green team weight and billing app repo"
 git pull -f origin main
 echo "Done pulling green team weight and billing app repo"
 
+# 2. Deploy to test environment
 deploy_to_test
 run_test_script
 
