@@ -12,37 +12,37 @@ APP_TOKEN="ucairqdcrdnvsfbl"
 
 function backup(){
     backup_date="$(date +%Y%m%d%H%M%S)"
-    cd ../billing_app
+    cd /home/ubuntu/ganshmuelgreenteam/billing_app
     docker build -t billing-app:00-SNAPSHOT-$backup_date .
-    cd ../weight_app
+    cd /home/ubuntu/ganshmuelgreenteam/weight_app
     docker build -t weight-app:00-SNAPSHOT-$backup_date .
 }
 
 function deploy_to_test(){
     echo "Building Test Application From Docker Compose File"
-    cd ../billing_app
+    cd /home/ubuntu/ganshmuelgreenteam/billing_app
     docker-compose -f docker-compose-test.yml build
     docker-compose -f docker-compose-test.yml up -d
-    cd ../weight_app
+    cd /home/ubuntu/ganshmuelgreenteam/weight_app
     docker-compose -f docker-compose-test.yml build
     docker-compose -f docker-compose-test.yml up -d
 }
 
 function deploy_to_production(){
     echo "Building Production Application From Docker Compose File"
-    cd ../billing_app
+    cd /home/ubuntu/ganshmuelgreenteam/billing_app
     docker-compose -f docker-compose-production.yml build
     docker-compose -f docker-compose-production.yml up -d
-    cd ../weight_app
+    cd /home/ubuntu/ganshmuelgreenteam/weight_app
     docker-compose -f docker-compose-production.yml build
     docker-compose -f docker-compose-production.yml up -d
 }
 
 function kill_test_env(){
     echo "Taking Down Test Application From Docker Compose File"
-    cd ../billing_app
+    cd /home/ubuntu/ganshmuelgreenteam/billing_app
     docker-compose -f docker-compose-production.yml down
-    cd ../weight_app
+    cd /home/ubuntu/ganshmuelgreenteam/weight_app
     docker-compose -f docker-compose-production.yml down
 }
 
