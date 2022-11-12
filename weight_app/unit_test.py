@@ -25,7 +25,6 @@ class ApiTest(unittest.TestCase):
     "weight": 120
 }
 
-
     WEIGHT_OBJ_OUT_FORCE = {
     "direction": "out",
     "truck": "L-387380",
