@@ -370,9 +370,16 @@ def get_unknown():
 
 @app.route("/weight-api/health", methods=["GET"])
 def get_health():
-    return jsonify({
-        "status": "OK"
-    })
+    cur=mysql.connection.cursor()    
+    results=cur.execute("SELECT 1 FROM transactions")
+    results2=cur.execute("SELECT 1 FROM containers_registered")
+    if results and results2:    
+        res=jsonify({"message": "Weight server health check successful"})
+        res.status_code=200
+        return res
+    res=jsonify({"warning":"server down!!!"})
+    res.status_code=404
+    return res
     
 if __name__=="__main__":
     app.run(host='0.0.0.0')
