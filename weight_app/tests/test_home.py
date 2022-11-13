@@ -1,8 +1,9 @@
-from app import app
+import requests
+base_url = 'http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081'
 
-def test_home_page():
-    web=app.test_client()     
-    response=web.get('/')
+
+def test_home_page():    
+    response=requests.get(base_url)
     assert response.status_code==200
     
 
