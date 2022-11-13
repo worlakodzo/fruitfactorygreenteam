@@ -260,10 +260,10 @@ def Truck_Put(id):
 
 @app.route('/truck/<id>', methods=['GET'])
 def get_truckid(id):
-    #id=request.args.get('id')
+
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
-    if id != None:
+    if id != None and t1 and t2:
         try:
         
             param={'id':id,"from":t1,"to":t2}
@@ -274,7 +274,18 @@ def get_truckid(id):
 
             
         except Exception as e:
-                    return jsonify({"message": "failure fetching data "}), 400    
+                    return jsonify({"message": "failure fetching data "}), 400
+    else:
+        
+        # Get provider record for update
+        with connection.cursor() as mycursor:
+            do = "SELECT * FROM Provider where id=%s"
+            mycursor = connection.cursor(dictionary=True)
+            mycursor.execute(do,[(id)])
+            result = mycursor.fetchone()
+
+            return jsonify(result)
+
             
         
 
