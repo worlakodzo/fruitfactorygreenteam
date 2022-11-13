@@ -64,10 +64,11 @@ def provider():
             
     else:
 
-        with connection.cursor() as provider:
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
             do = "SELECT * FROM Provider"
-            provider.execute(do)
-            result = provider.fetchall()
+            mycursor.execute(do)
+            result = mycursor.fetchall()
 
             return jsonify(result)
 
@@ -80,20 +81,27 @@ def update_provider_name(id):
         name = body['name']
 
         if name != '':
-            with connection.cursor() as provider:
-                provider = connection.cursor(dictionary=True)
+            with connection.cursor() as mycursor:
+                mycursor= connection.cursor(dictionary=True)
                 do,val = "UPDATE Provider SET name =%s where id=%s",(name,id)
-                provider.execute(do,val)
-                connection.commit()
+                mycursor.execute(do,val)
+                mycursor.commit()
                 return jsonify({"message":"update succes:  "}), 201
         else:
             return jsonify({"msg": " Unsuccessfull!!!"}), 204
 
 
     if request.method == 'GET':
+             with connection.cursor() as mycursor:
+                 do = "SELECT * FROM Provider where id=%s"
+                 mycursor = connection.cursor(dictionary=True)
+                 mycursor.execute(do,[(id)])
+                 result = mycursor.fetchone()
 
-        # retrieve specific provider here 
-        pass
+                 return jsonify(result)
+            # retrieve specific provider here 
+
+             pass
 
 
 
@@ -159,7 +167,7 @@ def rates():
         # Return list of rate to frontend
 
         with connection.cursor() as mycursor:
-            # mycursor = connection.cursor(dictionary=True)
+            #mycursor = connection.cursor(dictionary=True)
             stmt = "SELECT * FROM Rates"
             mycursor.execute(stmt)
             stmt_result = mycursor.fetchall()
@@ -208,36 +216,6 @@ def Truck_Post():
         truck_id = body['id']
         provider_id = body['provider_id']
 
-        if truck_id != '' and provider_id != '' :
-            
-            
-             with connection.cursor() as mycursor:
-                mycursor = connection.cursor(dictionary=True)
-                stmt, val = "INSERT INTO Trucks (id, provider_id) VALUES (%s, (select id from Provider where id=%s))", (truck_id, provider_id)
-               
-               #trap Database Error
-                try:            
-                    mycursor.execute(stmt, val)
-                    connection.commit()
-                    return jsonify({"message": "Truck data saved successfully!"}), 201
-                except:
-                    return jsonify({"msg": "error posting "}), 204
-                    
-             
-
-        else:
-            return jsonify({"msg": "Enter Truck ID and Provider ID "}), 204
-
-    elif request.method == "GET":
-
-
-        with connection.cursor() as mycursor:
-             mycursor = connection.cursor(dictionary=True)
-            # stmt = "SELECT * FROM Truck"
-            # mycursor.execute(stmt)
-            # stmt_result = mycursor.fetchall()
-            # return jsonify(stmt_result)
-
         if truck_id != '' and provider_id != None :
                 try: 
                     with connection.cursor() as mycursor:
@@ -254,6 +232,8 @@ def Truck_Post():
         return jsonify({"message": "method not allowed"}), 405
 
 
+
+#End point for put track_id
 @app.route('/truck/<id>', methods=['PUT'])
 def Truck_Put(id):
     
@@ -262,53 +242,37 @@ def Truck_Put(id):
         truck_id = request.args.get('id')
         provider_id = body['provider_id']
 
-        if truck_id !='' and provider_id != None:    
+        if id !='' and provider_id != None:    
             with connection.cursor() as mycursor:
                 mycursor = connection.cursor(dictionary=True)
                 stmt = "update Trucks set provider_id = %s where id=%s" 
-                val=(provider_id, truck_id)
+                val=(provider_id, id)
                 mycursor.execute(stmt,val)
-                connection.commit
+                mycursor.commit
                 return jsonify ({"message": "provider ID updated successfully! "}), 201
     else:
             return jsonify({"msg": "Truck ID not found in the database "}), 204
 
 
-@app.route('/truck/<id>')
+@app.route('/truck/<id>', methods=['GET'])
 def get_truckid(id):
-
+    #id=request.args.get('id')
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
-    param={'id':id,"from":t1,"to":t2}
-    reqResp=requests.get("url://weight_server:8081/item/<id>?from=t1&to=t2",params=param)
-    assert reqResp.status_code == 200
-    data=reqResp.json
-    return data
-
-
-@app.route('/truck',methods=['GET'])
-def truck_Get():
-    if request.method == 'GET':
-        reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081')
-        assert reqResp.status_code == 200
-        data=json.loads(reqResp.content)
-        print(data)
-        return jsonify(data), 200
+    if id != None:
+        try:
         
-            # t1 = request.args.get('t1')
-            # t2 = request.args.get('t2')
-            # param={'id':id,"from":t1,"to":t2}
-            # reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/')
-            # assert reqResp.status_code == 200
-           
-           
-        # except Exception as e:
-        #     #data={ "id": "144-12-510", "tara": "120","sessions": ["sid112220","sid22233","sid10002"]}
+            param={'id':id,"from":t1,"to":t2}
+            reqResp=requests.get("http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/",params=param)
+            assert reqResp.status_code == 200
+            data=reqResp.json()
+            return data
 
-        #     return "error inside expection",400
-    else:
-        return jsonify("message:error"),204
-
+            
+        except Exception as e:
+                    return jsonify({"message": "failure fetching data "}), 400    
+            
+        
 
 
 
@@ -324,8 +288,8 @@ def get_provider_list():
 @app.route('/truck-list', methods = ["GET"])
 def get_truck_list():
     try:
-
-        # Add list of providers
+        
+           # Add list of providers
 
         return render_template('truck-list.html',
         is_truck=True,
