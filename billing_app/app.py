@@ -276,10 +276,10 @@ def get_truckid(id):
         except Exception as e:
                     return jsonify({"message": "failure fetching data "}), 400
     else:
-        
-        # Get provider record for update
+
+        # Get truck record for update
         with connection.cursor() as mycursor:
-            do = "SELECT * FROM Provider where id=%s"
+            do = "SELECT * FROM Trucks where id=%s"
             mycursor = connection.cursor(dictionary=True)
             mycursor.execute(do,[(id)])
             result = mycursor.fetchone()
