@@ -290,7 +290,7 @@ const listenToEditBtn = () => {
                 formContainerEl.style.display = "block";
                 cardFormTitleEl.textContent = "Update Truck";
                 formEl.setAttribute("data-method-type", "PUT");
-                formEl.setAttribute("data-endpoint", `/truck/`);
+                formEl.setAttribute("data-endpoint", `/truck/${id}`);
 
             })
 
