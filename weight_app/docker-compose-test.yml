@@ -17,7 +17,7 @@ services:
     volumes:
       - weight-db:/var/lib/mysql
       - ./dump-db:/dump-db
-      - /in:/app/in
+      - ./in:/app/in
     
 
   weightapitest:
@@ -38,7 +38,7 @@ services:
       container_name: weight-api-test
       
       volumes:
-        - /in:/app/in
+        - ./in:/app/in
 
 
       depends_on:
