@@ -20,7 +20,7 @@ function backup(){
     # log backup image name
     echo "billing-app:00-SNAPSHOT-$backup_date" >> /home/ubuntu/logs/billing_backup_image_log.txt
     echo "weight-app:00-SNAPSHOT-$backup_date" >> /home/ubuntu/logs/weight_backup_image_log.txt
-    
+
 }
 
 function deploy_to_test(){
@@ -90,7 +90,7 @@ deploy_to_test
 
 # Wait for 15 second
 # to run test
-sleep 15
+sleep 30
 
 # 3. Run test function on test environment
 run_test_script
