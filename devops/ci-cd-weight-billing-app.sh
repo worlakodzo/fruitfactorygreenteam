@@ -16,6 +16,11 @@ function backup(){
     docker build -t billing-app:00-SNAPSHOT-$backup_date .
     cd /home/ubuntu/ganshmuelgreenteam/weight_app
     docker build -t weight-app:00-SNAPSHOT-$backup_date .
+
+    # log backup image name
+    echo "billing-app:00-SNAPSHOT-$backup_date" >> /home/ubuntu/logs/billing_backup_image_log.txt
+    echo "weight-app:00-SNAPSHOT-$backup_date" >> /home/ubuntu/logs/weight_backup_image_log.txt
+    
 }
 
 function deploy_to_test(){
@@ -23,6 +28,7 @@ function deploy_to_test(){
     cd /home/ubuntu/ganshmuelgreenteam/billing_app
     docker-compose -f docker-compose-test.yml build
     docker-compose -f docker-compose-test.yml up -d
+
     cd /home/ubuntu/ganshmuelgreenteam/weight_app
     docker-compose -f docker-compose-test.yml build
     docker-compose -f docker-compose-test.yml up -d
@@ -47,10 +53,17 @@ function kill_test_env(){
 }
 
 function run_test_script(){
-    echo "#######Testing Started...########"
-    # python3 -m pytest -v
 
-    echo "#######Testing Completed...########"
+    echo "#######...Testing Started...########"
+    # Run weight test cases
+    cd /home/ubuntu/ganshmuelgreenteam/weight_app
+    python3 -m pytest -v
+
+    # Run billing test cases
+    cd /home/ubuntu/ganshmuelgreenteam/billing_app
+    python3 -m pytest -v
+    echo "#######...Testing Completed...########"
+
 
     if [[ $? == 0 ]]; then
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $TEST_SUCCESS_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes
@@ -61,6 +74,7 @@ function run_test_script(){
         sendEmail -f $FROM_ADDRESS  -t $TO_ADDRESS -u $SUBJECT -m $FAILED_BODY -s smtp.gmail.com:587 -xu $FROM_ADDRESS  -xp $APP_TOKEN -o tls=yes 
     fi
 }
+
 
 # Create a backup of the images.
 backup
@@ -73,6 +87,10 @@ echo "Done pulling green team weight and billing app repo"
 
 # 2. Deploy to test environment
 deploy_to_test
+
+# Wait for 15 second
+# to run test
+sleep 15
 
 # 3. Run test function on test environment
 run_test_script
