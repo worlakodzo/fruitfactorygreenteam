@@ -145,7 +145,7 @@ def rates():
                     connection.commit()
                 return jsonify({"msg": "Rates uploaded successfully!"}), 201
         else:
-            return jsonify({"msg": "Unsupported file format!!!"}), 204
+            return jsonify({"msg": "Sorry, we couldn't locate the specified file!!!"}), 204
     else:
 
         if "display" not in request.args:
@@ -179,6 +179,13 @@ def rates():
                 return jsonify(result)
 
 
+def getratebyprovider(produce, provider):
+    with connection.cursor() as mycursor:
+        mycursor = connection.cursor(dictionary=True)
+        mycursor.execute("SELECT rate FROM Rates WHERE product_id = %s AND (scope = %s OR scope = %s)", (produce, provider, 'All'))
+        return mycursor.fetchone()
+
+
 @app.route('/bill/<id>')
 def getbill(id):
     t1 = request.args.get('t1') if request.args.get('t1') else datetime.datetime(2022,1,1).strftime('%Y%m%d%H%M%S')
@@ -186,17 +193,57 @@ def getbill(id):
     param={"from": t1,"to": t2}
 
     sessionuri = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/session/{id}").json()
-    # weighturi = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/weight/{id}", params=param).json()
+    weighturi = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/weight", params=param).json()
+    itemuri = requests.get(f"http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/item/{id}", params=param).json()
+
+    # providerid
+    with connection.cursor() as mycursor:
+        mycursor = connection.cursor(dictionary=True)
+        mycursor.execute("SELECT * FROM Provider WHERE id = %s", (id, ))
+        result = mycursor.fetchone()
+        providerid = result['id']
+        providername = result['name']
+        
+    sessiondict = dict()
+    products = []
+    product = {}
+    # sessioncount = 0
+    for session in weighturi:
+        # print(session)
+        produce = session['produce']
+        neto = session['neto'] if session['neto'] else 0
+        rate = getratebyprovider(produce, providerid)['rate']
+        pay = 0
+        # print('rate', rate)
+        # print('neto', neto)
+        # exit()
+        # pay = int(neto) * int(rate)
+        products.append({"product": produce, "count": neto, "amount": "", "rate": rate, "pay": pay})
+        if session['containers'] in sessiondict:
+            sessiondict[session['containers']] += 1
+            # if sessiondict[session['containers']] == 2:
+            #     sessioncount += 1
+            #     sessiondict[session['containers']] = 0
+        else:
+            sessiondict[session['containers']] = 1
+    # print('sessioncount',sessioncount)
+
+    # print('product',product)
+    # print('sessiondict',sessiondict)
+    # print('session',sessionuri)
+    # print('items',itemuri)
+    # exit()
     
     # expected return
     return jsonify({
-        "id": sessionuri[0]['id'],
-        "name": "<str>",
-        "from": sessionuri[0]['truck'],
-        "to": sessionuri[0]['truck'],
-        "truckCount": sessionuri[0]['truck'],
-        "sessionCount": sessionuri[0]['truck'],
-        "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
+        "id": providerid,
+        "name": providername,
+        "from": t1,
+        "to": t2,
+        "truckCount": sessionuri[0]['neto'],
+        "sessionCount": sessionuri[0]['bruto'],
+        # "products": [{ "product":"<str>","count": "<str>", "amount": "<int>", "rate": "<int>", "pay": "<int>"}],
+        "products": products,
         "total": sessionuri[0]['neto'] 
     })
 
