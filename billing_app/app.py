@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
+from flask import Flask, jsonify, request, abort, render_template, redirect, url_for, send_file
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
@@ -26,23 +26,6 @@ def health_db_status():
         return jsonify({"status":"failure"}), 500
     
 
-@app.route('/', methods = ["GET"])
-def billing_index():
-    try:
-        provider_count = 0
-        truck_count = 0
-        rate_count = 0
-
-        return render_template(
-            'index.html',
-            is_dashboard = True,
-            provider_count  = provider_count,
-            truck_count  = truck_count,
-            rate_count  = rate_count
-            )
-    except Exception as err:
-        abort(500)
-
 
 @app.route('/provider', methods=['GET', 'POST'])
 def provider():
@@ -64,10 +47,11 @@ def provider():
             
     else:
 
-        with connection.cursor() as provider:
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
             do = "SELECT * FROM Provider"
-            provider.execute(do)
-            result = provider.fetchall()
+            mycursor.execute(do)
+            result = mycursor.fetchall()
 
             return jsonify(result)
 
@@ -80,20 +64,27 @@ def update_provider_name(id):
         name = body['name']
 
         if name != '':
-            with connection.cursor() as provider:
-                provider = connection.cursor(dictionary=True)
+            with connection.cursor() as mycursor:
+                mycursor= connection.cursor(dictionary=True)
                 do,val = "UPDATE Provider SET name =%s where id=%s",(name,id)
-                provider.execute(do,val)
-                connection.commit()
+                mycursor.execute(do,val)
+                mycursor.commit()
                 return jsonify({"message":"update succes:  "}), 201
         else:
             return jsonify({"msg": " Unsuccessfull!!!"}), 204
 
 
     if request.method == 'GET':
+             with connection.cursor() as mycursor:
+                 do = "SELECT * FROM Provider where id=%s"
+                 mycursor = connection.cursor(dictionary=True)
+                 mycursor.execute(do,[(id)])
+                 result = mycursor.fetchone()
 
-        # retrieve specific provider here 
-        pass
+                 return jsonify(result)
+            # retrieve specific provider here 
+
+             pass
 
 
 
@@ -156,25 +147,36 @@ def rates():
         else:
             return jsonify({"msg": "Sorry, we couldn't locate the specified file!!!"}), 204
     else:
-        # Return list of rate to frontend
 
-        with connection.cursor() as mycursor:
-            # mycursor = connection.cursor(dictionary=True)
-            stmt = "SELECT * FROM Rates"
-            mycursor.execute(stmt)
-            stmt_result = mycursor.fetchall()
-            # export data to excel file
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "rates"
+        if "display" not in request.args:
 
-            ws.append(['Product', 'Rate', 'Scope'])
+            with connection.cursor() as mycursor:
+                #mycursor = connection.cursor(dictionary=True)
+                stmt = "SELECT * FROM Rates"
+                mycursor.execute(stmt)
+                stmt_result = mycursor.fetchall()
+                # export data to excel file
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "rates"
 
-            for row in stmt_result:
-                ws.append(list(row))
-            wb.save(f"in/rates-{datetime.datetime.now().strftime('%Y%m%d')}.xlsx")
-            
-            return jsonify({"msg": "Rates downloaded successfully!"})
+                ws.append(['Product', 'Rate', 'Scope'])
+
+                for row in stmt_result:
+                    ws.append(list(row))
+                wb.save(f"in/rates-{datetime.datetime.now().strftime('%Y%m%d')}.xlsx")
+                
+                return jsonify({"msg": "Rates downloaded successfully!"})
+
+        else:
+
+            # Get all rates to frontend
+            with connection.cursor() as mycursor:
+                mycursor = connection.cursor(dictionary=True)
+                do = "SELECT * FROM Rates"
+                mycursor.execute(do)
+                result = mycursor.fetchall()
+                return jsonify(result)
 
 
 def getratebyprovider(produce, provider):
@@ -248,42 +250,12 @@ def getbill(id):
 
 
 #Endpoint for post truck    
-@app.route('/truck', methods=['POST'])
+@app.route('/truck', methods=["GET",'POST'])
 def Truck_Post():
     if request.method == 'POST':
         body = request.get_json()
         truck_id = body['id']
         provider_id = body['provider_id']
-
-        if truck_id != '' and provider_id != '' :
-            
-            
-             with connection.cursor() as mycursor:
-                mycursor = connection.cursor(dictionary=True)
-                stmt, val = "INSERT INTO Trucks (id, provider_id) VALUES (%s, (select id from Provider where id=%s))", (truck_id, provider_id)
-               
-               #trap Database Error
-                try:            
-                    mycursor.execute(stmt, val)
-                    connection.commit()
-                    return jsonify({"message": "Truck data saved successfully!"}), 201
-                except:
-                    return jsonify({"msg": "error posting "}), 204
-                    
-             
-
-        else:
-            return jsonify({"msg": "Enter Truck ID and Provider ID "}), 204
-
-    elif request.method == "GET":
-
-
-        with connection.cursor() as mycursor:
-             mycursor = connection.cursor(dictionary=True)
-            # stmt = "SELECT * FROM Truck"
-            # mycursor.execute(stmt)
-            # stmt_result = mycursor.fetchall()
-            # return jsonify(stmt_result)
 
         if truck_id != '' and provider_id != None :
                 try: 
@@ -297,10 +269,22 @@ def Truck_Post():
                     return jsonify({"message": "failure posting "}), 400
         else:
             return jsonify({"message": "provide Truck ID and Provider ID "}), 400
+
+    elif request.method == "GET":
+        # Get all trucks
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            do = "SELECT * FROM Trucks"
+            mycursor.execute(do)
+            result = mycursor.fetchall()
+            return jsonify(result)
+
     else:
         return jsonify({"message": "method not allowed"}), 405
 
 
+
+#End point for put track_id
 @app.route('/truck/<id>', methods=['PUT'])
 def Truck_Put(id):
     
@@ -309,55 +293,93 @@ def Truck_Put(id):
         truck_id = request.args.get('id')
         provider_id = body['provider_id']
 
-        if truck_id !='' and provider_id != None:    
+        if id !='' and provider_id != None:    
             with connection.cursor() as mycursor:
                 mycursor = connection.cursor(dictionary=True)
                 stmt = "update Trucks set provider_id = %s where id=%s" 
-                val=(provider_id, truck_id)
+                val=(provider_id, id)
                 mycursor.execute(stmt,val)
-                connection.commit
+                mycursor.commit
                 return jsonify ({"message": "provider ID updated successfully! "}), 201
     else:
             return jsonify({"msg": "Truck ID not found in the database "}), 204
 
 
-@app.route('/truck/<id>')
+@app.route('/truck/<id>', methods=['GET'])
 def get_truckid(id):
 
     t1 = request.args.get('t1')
     t2 = request.args.get('t2')
-    param={'id':id,"from":t1,"to":t2}
-    reqResp=requests.get("url://weight_server:8081/item/<id>?from=t1&to=t2",params=param)
-    assert reqResp.status_code == 200
-    data=reqResp.json
-    return data
-
-
-@app.route('/truck',methods=['GET'])
-def truck_Get():
-    if request.method == 'GET':
-        reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081')
-        assert reqResp.status_code == 200
-        data=json.loads(reqResp.content)
-        print(data)
-        return jsonify(data), 200
+    if id != None and t1 and t2:
+        try:
         
-            # t1 = request.args.get('t1')
-            # t2 = request.args.get('t2')
-            # param={'id':id,"from":t1,"to":t2}
-            # reqResp=requests.get('http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/')
-            # assert reqResp.status_code == 200
-           
-           
-        # except Exception as e:
-        #     #data={ "id": "144-12-510", "tara": "120","sessions": ["sid112220","sid22233","sid10002"]}
+            param={'id':id,"from":t1,"to":t2}
+            reqResp=requests.get("http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8081/",params=param)
+            assert reqResp.status_code == 200
+            data=reqResp.json()
+            return data
 
-        #     return "error inside expection",400
+            
+        except Exception as e:
+                    return jsonify({"message": "failure fetching data "}), 400
     else:
-        return jsonify("message:error"),204
+
+        # Get truck record for update
+        with connection.cursor() as mycursor:
+            do = "SELECT * FROM Trucks where id=%s"
+            mycursor = connection.cursor(dictionary=True)
+            mycursor.execute(do,[(id)])
+            result = mycursor.fetchone()
+
+            return jsonify(result)
+
+            
+        
 
 
 
+
+
+### BEGIN FRONTEND ROUTE ###
+
+@app.route('/', methods = ["GET"])
+def billing_index():
+    try:
+        provider_count = 0
+        truck_count = 0
+        rate_count = 0
+
+
+        # Get all rates to frontend
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+
+            # Rate
+            rate_query = "SELECT * FROM Rates"
+            mycursor.execute(rate_query)
+            rate_count = len(mycursor.fetchall())
+
+            # Truck
+            truck_query = "SELECT * FROM Trucks"
+            mycursor.execute(truck_query)
+            truck_count = len(mycursor.fetchall())
+
+            # Provider
+            provider_query = "SELECT * FROM Provider"
+            mycursor.execute(provider_query)
+            provider_count = len(mycursor.fetchall())
+
+
+
+        return render_template(
+            'index.html',
+            is_dashboard = True,
+            provider_count  = provider_count,
+            truck_count  = truck_count,
+            rate_count  = rate_count
+            )
+    except Exception as err:
+        abort(500)
 
 @app.route('/provider-list', methods = ["GET"])
 def get_provider_list():
@@ -372,11 +394,17 @@ def get_provider_list():
 def get_truck_list():
     try:
 
-        # Add list of providers
+        result = []
+
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            do = "SELECT * FROM Provider"
+            mycursor.execute(do)
+            result = mycursor.fetchall()
 
         return render_template('truck-list.html',
         is_truck=True,
-        providers = []
+        providers = result
         )
     except Exception as err:
         abort(500)
@@ -386,13 +414,36 @@ def get_truck_list():
 def get_rate_list():
     try:
 
-        
         return render_template('rate-list.html', is_rate=True)
     except Exception as err:
         abort(500)
 
 
 
+
+@app.route('/download/rates')
+def downloadFile ():
+    path = f"in/rates-{datetime.datetime.now().strftime('%Y%m%d')}.xlsx"
+    with connection.cursor() as mycursor:
+        #mycursor = connection.cursor(dictionary=True)
+        stmt = "SELECT * FROM Rates"
+        mycursor.execute(stmt)
+        stmt_result = mycursor.fetchall()
+        # export data to excel file
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "rates"
+
+        ws.append(['Product', 'Rate', 'Scope'])
+
+        for row in stmt_result:
+            ws.append(list(row))
+        wb.save(path)
+
+
+    return send_file(path, as_attachment=True)
+
+### BEGIN FRONTEND ROUTE ###
 
 
 @app.errorhandler(500)
