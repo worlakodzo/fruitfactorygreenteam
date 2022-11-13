@@ -41,9 +41,9 @@ function deploy_to_production(){
 function kill_test_env(){
     echo "Taking Down Test Application From Docker Compose File"
     cd /home/ubuntu/ganshmuelgreenteam/billing_app
-    docker-compose -f docker-compose-production.yml down
+    docker-compose -f docker-compose-test.yml down --remove-orphans
     cd /home/ubuntu/ganshmuelgreenteam/weight_app
-    docker-compose -f docker-compose-production.yml down
+    docker-compose -f docker-compose-test.yml down --remove-orphans
 }
 
 function run_test_script(){
@@ -74,7 +74,7 @@ echo "Done pulling green team weight and billing app repo"
 # 2. Deploy to test environment
 deploy_to_test
 
-# 3. Run test function
+# 3. Run test function on test environment
 run_test_script
 
 

@@ -21,12 +21,12 @@ def test_post_provider_with_name_Testprovider1_status_code_expected_201():
      assert response.status_code == 201
 
 
-def test_put__provider_with_id_1002_status_code_expected_201():
+# def test_put__provider_with_id_1002_status_code_expected_201():
      
-     url = 'http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8082/provider/1002'
-     myobj = {"name": "Testprovider1002"}
-     response = requests.put(url, json = myobj)
-     assert response.status_code == 201
+#      url = 'http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8082/provider/1002'
+#      myobj = {"name": "Testprovider1002"}
+#      response = requests.put(url, json = myobj)
+#      assert response.status_code == 201
 
 
 #get specific provider with the id
@@ -62,16 +62,13 @@ def test_get__rates_200():
 
 
 
-#get billing 
-
-
 #Test Post truck endpoint success is code 201 
-def test_post__truck_201():
+# def test_post__truck_201():
      
-     url = 'http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8082/truck'
-     myobj = {"id": "111-11-111","provider_id": 1002 }
-     response = requests.post(url, json = myobj)
-     assert response.status_code == 201
+#      url = 'http://ec2-18-192-110-37.eu-central-1.compute.amazonaws.com:8082/truck'
+#      myobj = {"id": "111-11-111","provider_id": 1002 }
+#      response = requests.post(url, json = myobj, headers={"Content-Type":"application/json"})
+#      assert response.status_code == 201
 
 
 
