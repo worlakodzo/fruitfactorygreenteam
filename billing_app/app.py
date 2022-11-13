@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
+from flask import Flask, jsonify, request, abort, render_template, redirect, url_for, send_file
 import os.path
 from openpyxl import Workbook, load_workbook
 import datetime
@@ -25,23 +25,6 @@ def health_db_status():
         
         return jsonify({"status":"failure"}), 500
     
-
-@app.route('/', methods = ["GET"])
-def billing_index():
-    try:
-        provider_count = 0
-        truck_count = 0
-        rate_count = 0
-
-        return render_template(
-            'index.html',
-            is_dashboard = True,
-            provider_count  = provider_count,
-            truck_count  = truck_count,
-            rate_count  = rate_count
-            )
-    except Exception as err:
-        abort(500)
 
 
 @app.route('/provider', methods=['GET', 'POST'])
@@ -164,25 +147,36 @@ def rates():
         else:
             return jsonify({"msg": "Unsupported file format!!!"}), 204
     else:
-        # Return list of rate to frontend
 
-        with connection.cursor() as mycursor:
-            #mycursor = connection.cursor(dictionary=True)
-            stmt = "SELECT * FROM Rates"
-            mycursor.execute(stmt)
-            stmt_result = mycursor.fetchall()
-            # export data to excel file
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "rates"
+        if "display" not in request.args:
 
-            ws.append(['Product', 'Rate', 'Scope'])
+            with connection.cursor() as mycursor:
+                #mycursor = connection.cursor(dictionary=True)
+                stmt = "SELECT * FROM Rates"
+                mycursor.execute(stmt)
+                stmt_result = mycursor.fetchall()
+                # export data to excel file
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "rates"
 
-            for row in stmt_result:
-                ws.append(list(row))
-            wb.save(f"in/rates-{datetime.datetime.now().strftime('%Y%m%d')}.xlsx")
-            
-            return jsonify({"msg": "Rates downloaded successfully!"})
+                ws.append(['Product', 'Rate', 'Scope'])
+
+                for row in stmt_result:
+                    ws.append(list(row))
+                wb.save(f"in/rates-{datetime.datetime.now().strftime('%Y%m%d')}.xlsx")
+                
+                return jsonify({"msg": "Rates downloaded successfully!"})
+
+        else:
+
+            # Get all rates to frontend
+            with connection.cursor() as mycursor:
+                mycursor = connection.cursor(dictionary=True)
+                do = "SELECT * FROM Rates"
+                mycursor.execute(do)
+                result = mycursor.fetchall()
+                return jsonify(result)
 
 
 @app.route('/bill/<id>')
@@ -209,7 +203,7 @@ def getbill(id):
 
 
 #Endpoint for post truck    
-@app.route('/truck', methods=['POST'])
+@app.route('/truck', methods=["GET",'POST'])
 def Truck_Post():
     if request.method == 'POST':
         body = request.get_json()
@@ -228,6 +222,16 @@ def Truck_Post():
                     return jsonify({"message": "failure posting "}), 400
         else:
             return jsonify({"message": "provide Truck ID and Provider ID "}), 400
+
+    elif request.method == "GET":
+        # Get all trucks
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            do = "SELECT * FROM Trucks"
+            mycursor.execute(do)
+            result = mycursor.fetchall()
+            return jsonify(result)
+
     else:
         return jsonify({"message": "method not allowed"}), 405
 
@@ -276,6 +280,49 @@ def get_truckid(id):
 
 
 
+
+
+### BEGIN FRONTEND ROUTE ###
+
+@app.route('/', methods = ["GET"])
+def billing_index():
+    try:
+        provider_count = 0
+        truck_count = 0
+        rate_count = 0
+
+
+        # Get all rates to frontend
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+
+            # Rate
+            rate_query = "SELECT * FROM Rates"
+            mycursor.execute(rate_query)
+            rate_count = len(mycursor.fetchall())
+
+            # Truck
+            truck_query = "SELECT * FROM Trucks"
+            mycursor.execute(truck_query)
+            truck_count = len(mycursor.fetchall())
+
+            # Provider
+            provider_query = "SELECT * FROM Provider"
+            mycursor.execute(provider_query)
+            provider_count = len(mycursor.fetchall())
+
+
+
+        return render_template(
+            'index.html',
+            is_dashboard = True,
+            provider_count  = provider_count,
+            truck_count  = truck_count,
+            rate_count  = rate_count
+            )
+    except Exception as err:
+        abort(500)
+
 @app.route('/provider-list', methods = ["GET"])
 def get_provider_list():
     try:
@@ -288,12 +335,18 @@ def get_provider_list():
 @app.route('/truck-list', methods = ["GET"])
 def get_truck_list():
     try:
-        
-           # Add list of providers
+
+        result = []
+
+        with connection.cursor() as mycursor:
+            mycursor = connection.cursor(dictionary=True)
+            do = "SELECT * FROM Provider"
+            mycursor.execute(do)
+            result = mycursor.fetchall()
 
         return render_template('truck-list.html',
         is_truck=True,
-        providers = []
+        providers = result
         )
     except Exception as err:
         abort(500)
@@ -303,13 +356,36 @@ def get_truck_list():
 def get_rate_list():
     try:
 
-        
         return render_template('rate-list.html', is_rate=True)
     except Exception as err:
         abort(500)
 
 
 
+
+@app.route('/download/rates')
+def downloadFile ():
+    path = f"in/rates-{datetime.datetime.now().strftime('%Y%m%d')}.xlsx"
+    with connection.cursor() as mycursor:
+        #mycursor = connection.cursor(dictionary=True)
+        stmt = "SELECT * FROM Rates"
+        mycursor.execute(stmt)
+        stmt_result = mycursor.fetchall()
+        # export data to excel file
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "rates"
+
+        ws.append(['Product', 'Rate', 'Scope'])
+
+        for row in stmt_result:
+            ws.append(list(row))
+        wb.save(path)
+
+
+    return send_file(path, as_attachment=True)
+
+### BEGIN FRONTEND ROUTE ###
 
 
 @app.errorhandler(500)
