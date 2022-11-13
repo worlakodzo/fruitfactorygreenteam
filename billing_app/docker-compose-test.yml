@@ -36,7 +36,9 @@ services:
         MYSQL_HOST: 'billdb'
       container_name: billing-api-test
       depends_on:
-        - billdbtest
+        - billdb
+      volumes:
+      - ./in:/in
       
       
 

@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Green Billing Team | Gan Shmuel{% endblock %}
+
+{% block main %}
+<div class="pagetitle">
+  <h1>Rates</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+      <li class="breadcrumb-item active">Rates</li>
+    </ol>
+  </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+    <div class="row">
+
+        <div id="form-container" data-method-type="method-type" style="display: none;" class="col-lg-12">
+            <div class="col-lg-6" style="float: right;">
+
+            <!--Begin Error-->
+            <div id="error-container" style="display: none;" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <p id="error-content">Error message!</p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <!--End Error-->
+
+
+            <div class="card">
+              <div class="card-body">
+                <h5 id="card-form-title" class="card-title">Upload Rates</h5>
+  
+                <!-- No Labels Form -->
+                <form id="form" class="row g-3">
+                  <div class="col-md-12">
+                    <input type="text"  required id="rate-filename"  name="rate_filename" class="form-control" placeholder="Enter filename">
+                  </div>
+                  <div class="text-center">
+                    <button id="btn-cance-form" type="reset" class="btn btn-defaults">Cancel</button>
+                    <button id="btn-save-data" type="submit" class="btn btn-primary">Submit</button>
+                  </div>
+                </form><!-- End No Labels Form -->
+  
+              </div>
+            </div>
+            
+          </div>
+
+        </div>
+  
+  
+
+      <div class="col-lg-12">
+
+        <div class="card">
+          <div class="card-body">
+
+            <a type="button" id="btn-add-new" style="margin-top: 10px;  margin-bottom:10px;margin-right: 5px; float:right" class="btn btn-primary">Upload File</a>
+            <a type="button" id="" href="/download/rates" style="margin-top: 10px;  margin-bottom:10px;margin-right: 5px; float:right" class="btn btn-success">Download Rate</a>
+            <!-- Table with stripped rows -->
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Product Id</th>
+                  <th scope="col">Scope</th>
+                  <th style="text-align: right;" scope="col">Rate</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+
+              </tbody>
+            </table>
+
+
+            <!-- End Table with stripped rows -->
+              <!-- Center aligned spinner -->
+              <div class="d-flex justify-content-center">
+                <div id="table-spinner" style="display: block;" class="spinner-border" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            <!-- End Center aligned spinner -->
+
+
+
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </section>
+
+
+
+{% endblock %}
+
+{% block js %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(event){
+
+    const formContainerEl = document.querySelector("#form-container");
+    const rateFilenameEl = document.querySelector("#rate-filename");
+    const cardFormTitleEl = document.querySelector("#card-form-title");
+    const formEl = document.querySelector("#form");
+
+
+    // Display form
+    document.getElementById("btn-add-new").onclick = function(event){
+        formContainerEl.style.display = "block";
+        cardFormTitleEl.textContent = "Upload Rates";
+        rateFilenameEl.textContent = "";
+        formEl.setAttribute("data-method-type", "POST");
+        formEl.setAttribute("data-endpoint", "/rates");
+    }
+
+    // Cancel or hide form
+    document.getElementById("btn-cance-form").onclick = function(event){
+        formContainerEl.style.display = "none";
+    }
+
+    formEl.onsubmit = saveDataToDatabase;
+
+    
+    loadTable();
+
+
+})
+
+const saveDataToDatabase = (event) =>{
+    event.preventDefault();
+
+    const formEl = document.querySelector("#form");
+    const errorContainerEl = document.querySelector("#error-container");
+    const errorContentEl = document.querySelector("#error-content");
+    const methodType = formEl.getAttribute("data-method-type");// POST or PUT
+    const endpoint = formEl.getAttribute("data-endpoint");
+    const rateFilename = document.querySelector("#rate-filename").value;
+    const btnSaveData = document.querySelector("#btn-save-data");
+
+
+    // reset error 
+    errorContainerEl.style.display = "none";
+    errorContentEl.textContent = "";
+
+
+    // Activate loading
+    const loading = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> saving...';
+    btnSaveData.innerHTML = loading;
+    btnSaveData.disabled = true;
+
+    fetch(endpoint, {
+        method:methodType,
+        body: JSON.stringify({file: rateFilename}),
+        headers: {"Content-Type": "application/json"}
+    }).then(function(response){
+        if (response.status === 201 || response.status === 200){
+            // Reload the current page
+            // to reflect new changes
+            window.location.href = "/rate-list";
+
+        }else{
+
+
+            // set error 
+            errorContainerEl.style.display = "block";
+            errorContentEl.textContent = "Something went wrong, whilst saving the data!";
+
+            // deactivate loading
+            btnSaveData.innerHTML = "Save";
+            btnSaveData.disabled = false;
+
+        }
+
+    }).catch(function(err){
+
+        // set error 
+        errorContainerEl.style.display = "block";
+        errorContentEl.textContent = "Something went wrong, check your network!";
+
+        // deactivate loading
+        btnSaveData.innerHTML = "Save";
+        btnSaveData.disabled = false;
+
+    })
+    
+
+}
+
+
+const loadTable = () => {
+   
+    const tableSpinnerEl = document.getElementById("table-spinner");
+    const tableBodyEl = document.getElementById("table-body");
+
+    fetch("/rates?display=true", {
+        method: "GET",
+        headers: {"Content-Type": "application/json"}
+    }).then(function(response){
+        if (response.status === 200){
+            return response.json();
+        }else{
+            tableSpinnerEl.style.display = "none";
+        }
+
+    }).then(function(jsonData){
+
+    
+        let content = "";
+        let index = 0;
+        for (let provider of jsonData){
+            index += 1;
+            content += tableContent(index, provider);
+        }
+
+        tableSpinnerEl.style.display = "none";
+        tableBodyEl.innerHTML = content;
+        
+
+    }).catch(function(err){
+        tableSpinnerEl.style.display = "none";
+
+    })
+
+
+    
+
+}
+
+const tableContent = (index, rate) => {
+    return `
+            <tr>
+                  <th scope="row">${index}</th>
+                  <td>${rate.product_id}</td>
+                  <td>${rate.scope}</td>
+                  <td style="text-align: right;">${rate.rate} agorot</td>
+            </tr>    
+            `
+}
+
+
+</script>
+
+
+{% endblock %}

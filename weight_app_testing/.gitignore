@@ -1,9 +1,0 @@
-__pycache__/
-green/
-.pytest_cache/
-templates/
-.vscode/
-__init_.py
-unit_test.py
-calculateNeto.py
-app.py
