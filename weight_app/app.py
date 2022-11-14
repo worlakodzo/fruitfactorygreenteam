@@ -4,9 +4,10 @@ import json
 import sys
 from datetime import datetime
 
+
 import MySQLdb.cursors
 from calculateNeto import sum_container_weights
-from flask import Flask, jsonify, request, session
+from flask import Flask, jsonify, request, session, render_template, redirect, url_for
 from flask_mysqldb import MySQL
 
 app = Flask(__name__)
@@ -252,6 +253,7 @@ def get_batch_weight(file_name):
 
     try:  # Trying to read the file
         with open(f"./in/{file_name}", 'r') as file:
+            print(f"./in/{file_name}")
             if extension == "csv":
                 data = [{k: v for k, v in reader.items()}
                         for reader in csv.DictReader(file, skipinitialspace=True)]
@@ -285,6 +287,20 @@ def get_unknown():
     response.status_code = 200
     return response
 
+
+
+# Rendering HMTL
+@app.route("/")
+def landing_page():
+    return render_template("home.html")
+
+@app.route("/home")
+def home():
+    return redirect(url_for("landing_page"))
+
+@app.route("/register")
+def register():
+    return render_template("register.html")
 
 if __name__ == "__main__":
     app.run()
